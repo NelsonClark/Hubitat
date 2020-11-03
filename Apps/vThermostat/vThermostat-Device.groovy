@@ -1,20 +1,30 @@
 /**
  *  Copyright 2015 SmartThings
  *  Copyright 2018-2020 Josh McAllister (josh208@gmail.com)
+ *  Copyright 2020 Nelson Clark
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- *  in compliance with the License. You may obtain a copy of the License at:
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
- *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
- *  for the specific language governing permissions and limitations under the License.
- *
- */
+*  in compliance with the License. You may obtain a copy of the License at:
+*
+*      http://www.apache.org/licenses/LICENSE-2.0
+*
+*  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
+*  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
+*  for the specific language governing permissions and limitations under the License.
+* 
+* Version History
+* 0.5	As forked from josh208
+* 0.6.1	Code cleanup, small typos, change namespace/author
+*/
+static String version()	{  return '0.6.1'  }
+
 metadata {
 	// Automatically generated. Make future change here.
-	definition (name: "vThermostat Device", namespace: "josh208", author: "Josh McAllister") {
+	definition (name: "vThermostat Device", 
+		namespace: "nclark", 
+		author: "Nelson Clark",
+		importUrl: "") {
+		
 		capability "Thermostat"
 		capability "Thermostat Heating Setpoint"
 		capability "Thermostat Setpoint"
@@ -31,19 +41,18 @@ metadata {
 		command "setMaxHeatTemp", ["number"]
 		command "setMinCoolTemp", ["number"]
 		command "setMaxCoolTemp", ["number"]
-        command "setMaxUpdateInterval", ["number"]
+		command "setMaxUpdateInterval", ["number"]
 
 		attribute "thermostatThreshold", "number"
 		attribute "minHeatTemp", "number"
 		attribute "maxHeatTemp", "number"
 		attribute "minCoolTemp", "number"
 		attribute "maxCoolTemp", "number"
-        attribute "lastTempUpdate", "date"
-        attribute "maxUpdateInterval", "number"
-        attribute "preEmergencyMode", "string"
-        attribute "thermostatOperatingState", "string"
+		attribute "lastTempUpdate", "date"
+		attribute "maxUpdateInterval", "number"
+		attribute "preEmergencyMode", "string"
+		attribute "thermostatOperatingState", "string"
 	}
-
 }
 
 def installed() {
@@ -58,8 +67,8 @@ def installed() {
 	sendEvent(name: "coolingSetpoint", value: 76, unit: "F")
 	sendEvent(name: "thermostatMode", value: "off")
 	sendEvent(name: "thermostatOperatingState", value: "idle")
-    sendEvent(name: "maxUpdateInterval", value: 65)
-    sendEvent(name: "lastTempUpdate", value: new Date() )
+	sendEvent(name: "maxUpdateInterval", value: 65)
+	sendEvent(name: "lastTempUpdate", value: new Date() )
 }
 
 def updated() {
@@ -67,73 +76,73 @@ def updated() {
 	sendEvent(name: "maxCoolTemp", value: 95, unit: "F")
 	sendEvent(name: "maxHeatTemp", value: 80, unit: "F")
 	sendEvent(name: "minHeatTemp", value: 35, unit: "F")
-    sendEvent(name: "maxUpdateInterval", value: 65)
-    sendEvent(name: "lastTempUpdate", value: new Date() )
+	sendEvent(name: "maxUpdateInterval", value: 65)
+	sendEvent(name: "lastTempUpdate", value: new Date() )
 }
 
 def parse(String description) {
 }
 
 def evaluateMode() {
-    runIn(60, 'evaluateMode')
-    def temp = device.currentValue("temperature")
-    def heatingSetpoint = device.currentValue("heatingSetpoint");
-    def coolingSetpoint = device.currentValue("coolingSetpoint");
+	runIn(60, 'evaluateMode')
+	def temp = device.currentValue("temperature")
+	def heatingSetpoint = device.currentValue("heatingSetpoint");
+	def coolingSetpoint = device.currentValue("coolingSetpoint");
 	def threshold = device.currentValue("thermostatThreshold")
 	def current = device.currentValue("thermostatOperatingState")
 	def mode = device.currentValue("thermostatMode")
- 
-    //Deadman safety. Make sure that we don't keep running if temp is not getting updated.
-    def now = new Date().getTime()
-    def lastUpdate = Date.parse("E MMM dd H:m:s z yyyy", device.currentValue("lastTempUpdate")).getTime()
-    
-    def maxInterval = device.currentValue("maxUpdateInterval") ?: 180 //set a somewhat sain limit of 3 hours
-    if (maxInterval > 180) maxinterval = 180
-    maxInterval = maxInterval * 1000 * 60 //convert maxUpdateInterval (in minutes) to milliseconds
-    
-    log.debug "now=$now, lastUpdate=$lastUpdate, maxInterval=$maxInterval, heatingSetpoint=$heatingSetpoint, coolingSetpoint=$coolingSetpoint, temp=$temp"
-    
-    if (! (mode in ["emergency stop", "off"]) && now - lastUpdate >= maxInterval ) {
-        log.info("maxUpdateInterval exceeded. Setting emergencyStop mode")
-        sendEvent(name: "preEmergencyMode", value: mode)
-        sendEvent(name: "thermostatMode", value: "emergency stop")
-        runIn(2, 'evaluateMode')
-        return
-    } else if (mode == "emergency stop" && now - lastUpdate < maxInterval && device.currentValue("preEmergencyMode")) {
-        log.info("Autorecovered from emergencyStop. Resetting to previous mode.")
-        sendEvent(name: "thermostatMode", value: device.currentValue("preEmergencyMode"))
-        sendEvent(name: "preEmergencyMode", value: "")
-        runIn(2, 'evaluateMode')
-        return
-    }
-    
+
+	//Deadman safety. Make sure that we don't keep running if temp is not getting updated.
+	def now = new Date().getTime()
+	def lastUpdate = Date.parse("E MMM dd H:m:s z yyyy", device.currentValue("lastTempUpdate")).getTime()
+
+	def maxInterval = device.currentValue("maxUpdateInterval") ?: 180 //set a somewhat sain limit of 3 hours
+	if (maxInterval > 180) maxinterval = 180
+	maxInterval = maxInterval * 1000 * 60 //convert maxUpdateInterval (in minutes) to milliseconds
+
+	log.debug "now=$now, lastUpdate=$lastUpdate, maxInterval=$maxInterval, heatingSetpoint=$heatingSetpoint, coolingSetpoint=$coolingSetpoint, temp=$temp"
+
+	if (! (mode in ["emergency stop", "off"]) && now - lastUpdate >= maxInterval ) {
+		log.info("maxUpdateInterval exceeded. Setting emergencyStop mode")
+		sendEvent(name: "preEmergencyMode", value: mode)
+		sendEvent(name: "thermostatMode", value: "emergency stop")
+		runIn(2, 'evaluateMode')
+		return
+	} else if (mode == "emergency stop" && now - lastUpdate < maxInterval && device.currentValue("preEmergencyMode")) {
+		log.info("Autorecovered from emergencyStop. Resetting to previous mode.")
+		sendEvent(name: "thermostatMode", value: device.currentValue("preEmergencyMode"))
+		sendEvent(name: "preEmergencyMode", value: "")
+		runIn(2, 'evaluateMode')
+		return
+	}
+
 	if ( !threshold ) {
 		log.debug "Threshold was not set. Not doing anything..."
 		return
 	}
-	   
-    def callFor = "idle"
-    
-    if (mode in ["heat","emergency heat"]) {
-        sendEvent(name: "thermostatSetpoint", value: heatingSetpoint)
-        if ( (heatingSetpoint - temp) >= threshold) callFor = "heating"
-    } else if (mode == "cool") {
-        sendEvent(name: "thermostatSetpoint", value: coolingSetpoint)
-        if ( (temp - coolingSetpoint) >= threshold) callFor = "cooling"
 
-    } else if (mode == "auto") {
-        if (temp > coolingSetpoint) { //time to cool
-            sendEvent(name: "thermostatSetpoint", value: coolingSetpoint)
-            if ( (temp - coolingSetpoint) >= threshold) callFor = "cooling"
+	def callFor = "idle"
 
-        } else { //time to heat
-            sendEvent(name: "thermostatSetpoint", value: heatingSetpoint)
-            if ( (heatingSetpoint - temp) >= threshold) callFor = "heating"
+	if (mode in ["heat","emergency heat"]) {
+		sendEvent(name: "thermostatSetpoint", value: heatingSetpoint)
+		if ( (heatingSetpoint - temp) >= threshold) callFor = "heating"
+	} else if (mode == "cool") {
+		sendEvent(name: "thermostatSetpoint", value: coolingSetpoint)
+		if ( (temp - coolingSetpoint) >= threshold) callFor = "cooling"
+	} else if (mode == "auto") {
+		if (temp > coolingSetpoint) { 
+			//time to cool
+			sendEvent(name: "thermostatSetpoint", value: coolingSetpoint)
+			if ( (temp - coolingSetpoint) >= threshold) callFor = "cooling"
+		} else { 
+			//time to heat
+			sendEvent(name: "thermostatSetpoint", value: heatingSetpoint)
+			if ( (heatingSetpoint - temp) >= threshold) callFor = "heating"
+		}
+	}
 
-        }
-    }
 	log.debug "evaluateMode() : threshold=$threshold, actingMode=$mode, origState=$current, newState = $callFor"
-    sendEvent(name: "thermostatOperatingState", value: callFor)
+	sendEvent(name: "thermostatOperatingState", value: callFor)
 }
 
 def setHeatingSetpoint(degreesF){
@@ -175,8 +184,8 @@ def setThermostatThreshold(Double degreesF) {
 }
 
 def setMaxUpdateInterval(BigDecimal minutes) {
-    sendEvent(name: "maxUpdateInterval", value: minutes)
-    runIn(2,'evaluateMode')
+	sendEvent(name: "maxUpdateInterval", value: minutes)
+	runIn(2,'evaluateMode')
 }
 
 def setThermostatMode(String value) {
@@ -190,8 +199,8 @@ def off() {
 }
 
 def emergencyStop() {
-    sendEvent(name: "thermostatMode", value: "emergency stop")
-    runIn(2,'evaluateMode')
+	sendEvent(name: "thermostatMode", value: "emergency stop")
+	runIn(2,'evaluateMode')
 }
 
 def heat() {
@@ -221,7 +230,7 @@ def poll() {
 
 def setTemperature(value) {
 	sendEvent(name:"temperature", value: value)
-    sendEvent(name: "lastTempUpdate", value: new Date() )
+	sendEvent(name: "lastTempUpdate", value: new Date() )
 	runIn(2,'evaluateMode')
 }
 
