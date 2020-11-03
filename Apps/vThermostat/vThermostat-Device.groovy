@@ -153,7 +153,7 @@ def setHeatingSetpoint(Double degreesF) {
 }
 
 def setCoolingSetpoint(degreesF){
-	setCoolingSetpoint(defreesF.toDouble())
+	setCoolingSetpoint(degreesF.toDouble())
 }
 
 def setCoolingSetpoint(Double degreesF) {
