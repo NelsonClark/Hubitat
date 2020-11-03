@@ -23,7 +23,7 @@ metadata {
 	definition (name: "vThermostat Device", 
 		namespace: "nclark", 
 		author: "Nelson Clark",
-		importUrl: "") {
+		importUrl: "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/vThermostat/vThermostat-Device.groovy") {
 		
 		capability "Thermostat"
 		capability "Thermostat Heating Setpoint"
