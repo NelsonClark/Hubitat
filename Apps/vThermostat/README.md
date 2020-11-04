@@ -1,6 +1,23 @@
-# vThermostat
+# vThermostat for Hubitat
 
-vThermostat is a Hubitat App / Device Driver that will let you use 1 or multiple temperature sensors to control an outlet/plug that is used to turn on or off a heater and/or air conditioner.
+vThermostat is a Hubitat Device Type Handler that will help create a proper virtual thermostat device.
 
 It is based on vThermostat by Josh208 (https://github.com/josh208/hubitat/tree/master/vThermostat) that seems to be MIA from the Hubitat community.
+Originally ported from the SmartThings-VirtualThermostat-WithDTH (https://github.com/eliotstocker/SmartThings-VirtualThermostat-WithDTH). 
 
+
+This device handler allows the creation of a new Device thats shows as a thermostat, using the temperature from selected temperature sensor(s), and on/off outlet(s) for heating and/or cooling.
+
+
+# Installation
+
+Import the Parent and Child apps (in that order) in the <> Apps Code section of your Hubitat Hub
+Import the Device driver in the <> Drivers Code section of your Hubitat Hub.
+Go to the Apps Section and use the + Add User App button in the top right corner to add the vThermostat Manager
+In the vThermostat Manager, create a new vThermostat and select your devices.
+When done, a child app is created so you can change the devices used at any time, and a new device is created where you can set it up like any other thermostat.
+
+Enjoy!
+
+Pull requests welcome.
+Nelson Clark
