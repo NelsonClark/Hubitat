@@ -50,28 +50,28 @@ preferences {
 }
 
 def installed() {
-	log.debug "Running installed: $app.label"
+	log.debug "Running installed vThermostat: $app.label"
 	state.deviceID = "jmvt" + Math.abs(new Random().nextInt() % 9999) + 1
 
 	//create the child device
 	def thermostat
 	def label = app.getLabel()
-	log.debug "create device with id: jmvt$state.deviceID, named: $label"
+	log.debug "Creating vThermostat : $label device id: jmvt$state.deviceID"
 	try {
 		thermostat = addChildDevice("nclark", "vThermostat Device", state.deviceID, null, [label: label, name: label, completedSetup: true])
 	} catch(e) {
-		log.error("caught exception", e)
+		log.error("Could not create vThermostat; caught exception", e)
 	}
 	initialize(thermostat)
 }
 
 def updated() {
-	log.debug "Running updated: $app.label"
+	log.debug "Running updated vThermostat: $app.label"
 	initialize(getThermostat())
 }
 
 def initialize(thermostatInstance) {
-	log.debug "Running initialize: $app.label"
+	log.debug "Running initialized vThermostat: $app.label"
 
 	unsubscribe()
 	unschedule()
