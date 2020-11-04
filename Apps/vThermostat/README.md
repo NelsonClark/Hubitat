@@ -20,6 +20,14 @@ This device handler allows the creation of a new Device thats shows as a thermos
 Enjoy!
 
 
+# Version History
+
+* 0.1 - Original fork from Josh208
+* 0.2 - Minor bug fixes
+  * Code clean up
+  * Description change for Hubitat Environement
+  * Start commenting what is going on
+
 # ToDo
 
 Things to do in upcomming releases...
