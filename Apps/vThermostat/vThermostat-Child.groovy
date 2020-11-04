@@ -103,14 +103,14 @@ def uninstalled() {
 
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// Name
-//     It does
+// initialize
+//     Set preferences in the associated device and subscribe to the selected sensors and thermostat device
 //
 // Signature(s)
-//     
+//     initialize(thermostatInstance)
 //
 // Parameters
-//     None
+//     thermostatInstance : deviceWrapper
 //
 // Returns
 //     None
@@ -119,19 +119,24 @@ def uninstalled() {
 def initialize(thermostatInstance) {
 	logger("trace", "Initialize Running vThermostat: $app.label")
 
+	// First we need tu unsubscribe and unschedule any previous settings we had
 	unsubscribe()
 	unschedule()
 
+	// Set device settings
 	thermostatInstance.setHeatingSetpoint(heatingSetPoint)
 	thermostatInstance.setCoolingSetpoint(coolingSetPoint)
 	thermostatInstance.setThermostatThreshold(thermostatThreshold)
 	thermostatInstance.setThermostatMode(thermostatMode)
 
+	// Subscribe to the new sensor(s) and device
 	subscribe(sensors, "temperature", temperatureHandler)
 	subscribe(thermostat, "thermostatOperatingState", thermostatStateHandler)
 
+	// Update the temperature with these new sensors
 	updateTemperature()
 
+	// Schedule every minute the state of the controlled outlets
 	runEvery1Minute(setOutletsState)
 }
 
@@ -151,14 +156,16 @@ def initialize(thermostatInstance) {
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def getThermostat() {
+	
 	// Does this instance have a DeviceID
 	if (!state.deviceID){
+		
 		//No DeviceID available what is going on, has the device been removed?
 		logger("error", "getThermostat cannot access deviceID!")
 	} else {
-		//We have a deviceID, continue and return it
+		
+		//We have a deviceID, continue and return ChildDeviceWrapper
 		logger("trace", "getThermostat for device " + state.deviceID)
-
 		def child = getChildDevices().find {
 			d -> d.deviceNetworkId.startsWith(state.deviceID)
 		}
@@ -169,14 +176,15 @@ def getThermostat() {
 
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// Name
-//     It does
+// temperatureHandler
+//     Handles a sensor temperature change event
+//     Do not call this directly, only used to handle events
 //
 // Signature(s)
-//     
+//     temperatureHandler(evt)
 //
 // Parameters
-//     None
+//     evt : passed by the event subsciption
 //
 // Returns
 //     None
@@ -190,11 +198,11 @@ def temperatureHandler(evt)
 
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// Name
-//     It does
+// updateTemperature
+//     Update device current temperature based on selected sensors
 //
 // Signature(s)
-//     
+//     updateTemperature()
 //
 // Parameters
 //     None
@@ -207,11 +215,15 @@ def updateTemperature() {
 	def total = 0;
 	def count = 0;
 	def thermostat=getThermostat()
+	
+	// Total all sensor used
 	for(sensor in sensors) {
 		total += sensor.currentValue("temperature")
 		logger("debug", "Sensor $sensor.label reported " + sensor.currentValue("temperature"))
 		count++
 	}
+	
+	// Average the total divided by number of sensors
 	def avgTemp = total / count
 	thermostat.setTemperature(avgTemp)
 	return avgTemp
@@ -219,20 +231,23 @@ def updateTemperature() {
 
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// Name
-//     It does
+// thermostatStateHandler
+//     Handles a thermostat state change event
+//     Do not call this directly, only used to handle events
 //
 // Signature(s)
-//     
+//     thermostatStateHandler(evt)
 //
 // Parameters
-//     None
+//     evt : Passed by the event subscription
 //
 // Returns
 //     None
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def thermostatStateHandler(evt) {
+	
+	// Thermostat device changed the state (heating / cooling or other), go change state of outlets accordingly
 	if (evt.value) {
 		logger("warn", "Thermostat state changed to $opState")
 		setOutletsState(opState)
@@ -243,14 +258,14 @@ def thermostatStateHandler(evt) {
 
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// Name
-//     It does
+// setOutletsState
+//     Set the different outlets used for heating or cooling
 //
 // Signature(s)
-//     
+//     setOutletsState(string opState)
 //
 // Parameters
-//     None
+//     opState : heating / cooling (all other states will turn off all outlets
 //
 // Returns
 //     None
@@ -275,7 +290,6 @@ def setOutletsState(opState) {
 		coolOutlets ? coolOutlets.off() : null
 		logger("debug", "Turned off all heat/cool outlets.")
 	}
-	
 }
 
 
@@ -340,7 +354,7 @@ private logger(level, msg) {
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 private logsDropLevel(){
 	log.warn "Logging level set to 3"
-	updateSetting("logLevel",[value:"3",type:"string"]) //** Do we need to change just the setting or also the state variable?
+	updateSetting("logLevel",[value:"3",type:"string"]) //** Do we need to change just the setting or also/just the state variable?
 	//** device.updateSetting("logLevel",[value:"3",type:"string"])
 	logger("trace","New LogLevel: ${settings.logLevel}")
 }
