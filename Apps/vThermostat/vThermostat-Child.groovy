@@ -28,6 +28,7 @@ definition(
 	parent: "nclark:vThermostat Manager"
 )
 
+
 preferences {
 	section("Select temperature sensor(s)... (Average value will be used if you select multiple sensors)"){
 		input "sensors", "capability.temperatureMeasurement", title: "Sensor", multiple: true
@@ -54,12 +55,13 @@ preferences {
 	}
 }
 
+
 def installed() {
 	//Set Logging level and Dropt to level 3 if level is higher in set number of seconds
 	//def logLevelTime
 	state.loggingLevel = (settings.logLevel) ? settings.logLevel.toInteger() : 3 //*** Can this be simplefied
 	//logLevelTime = settings.logDropLevelTime.toInteger() * 60
-	if (state.loggingLevel >= 3) runIn(settings.logDropLevelTime.toInteger() * 60,logsOff)
+	if (state.loggingLevel >= 3) runIn(settings.logDropLevelTime.toInteger() * 60, logsDropLevel)
 	
 	logger("trace", "Installed LogLevel: $state.loggingLevel")
 	logger("trace", "Installed LogDropLevelTime: $settings.logDropLevelTime")
@@ -82,16 +84,38 @@ def installed() {
 	initialize(thermostat)
 }
 
+
 def updated() {
 	//Update Logging level and Dropt to level 3 if level is higher in set number of seconds
 	state.loggingLevel = (settings.logLevel) ? settings.logLevel.toInteger() : 3 //*** Can this be simplefied
-	if (state.loggingLevel >= 3) runIn(settings.logDropLevelTime.toInteger() * 60,logsOff)
+	if (state.loggingLevel >= 3) runIn(settings.logDropLevelTime.toInteger() * 60, logsDropLevel)
 	logger("trace", "Updated LogLevel: $state.loggingLevel")
 	logger("trace", "Updated LogDropLevelTime: $settings.logDropLevelTime")
 	logger("trace", "Updated Running vThermostat: $app.label")
 	initialize(getThermostat())
 }
 
+
+def uninstalled() {
+	deleteChildDevice(state.deviceID)
+	logger("info", "Child Device " + state.deviceID + " removed")
+}
+
+
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// Name
+//     It does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def initialize(thermostatInstance) {
 	logger("trace", "Initialize Running vThermostat: $app.label")
 
@@ -110,6 +134,7 @@ def initialize(thermostatInstance) {
 
 	runEvery1Minute(setOutletsState)
 }
+
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // getThermostat
@@ -142,17 +167,42 @@ def getThermostat() {
 	}
 }
 
-def uninstalled() {
-	deleteChildDevice(state.deviceID)
-	logger("info", "Child Device " + state.deviceID + " removed")
-}
 
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// Name
+//     It does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def temperatureHandler(evt)
 {
 	logger("debug", "Temperature changed to" + evt.doubleValue)
 	updateTemperature()
 }
 
+
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// Name
+//     It does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def updateTemperature() {
 	def total = 0;
 	def count = 0;
@@ -167,6 +217,21 @@ def updateTemperature() {
 	return avgTemp
 }
 
+
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// Name
+//     It does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def thermostatStateHandler(evt) {
 	if (evt.value) {
 		logger("warn", "Thermostat state changed to $opState")
@@ -176,6 +241,21 @@ def thermostatStateHandler(evt) {
 	}
 }
 
+
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// Name
+//     It does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def setOutletsState(opState) {
 	def thermostat = getThermostat()
 	opState = opState ? opState : thermostat.currentValue("thermostatOperatingState")
@@ -198,15 +278,23 @@ def setOutletsState(opState) {
 	
 }
 
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-//  logger(msg, level)
-//
-//  Wrapper function for all logging:
-//    Logs messages to the IDE (Live Logging)
-//    Configured using logLevel preferences
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-private logger(level = "debug", msg) {
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// logger
+//     Wrapper function for all logging with level control via preferences
+//
+// Signature(s)
+//     logger(String level, String msg)
+//
+// Parameters
+//     level : Error level string
+//     msg : Message to log
+//
+// Returns
+//     None
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+private logger(level, msg) {
 
 	switch(level) {
 		case "error":
@@ -235,7 +323,24 @@ private logger(level = "debug", msg) {
 	}
 }
 
-private logsOff(){
+
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// logsDropLevel
+//     Turn down logLevel to 3 in this app and it's device and log the change
+//
+// Signature(s)
+//     logsDropLevel()
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+private logsDropLevel(){
 	log.warn "Logging level set to 3"
-	device.updateSetting("logLevel",[value:"3",type:"enum"])
+	updateSetting("logLevel",[value:"3",type:"string"]) //** Do we need to change just the setting or also the state variable?
+	//** device.updateSetting("logLevel",[value:"3",type:"string"])
+	logger("trace","New LogLevel: ${settings.logLevel}")
 }
