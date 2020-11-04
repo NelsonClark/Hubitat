@@ -44,12 +44,22 @@ preferences {
 	section("Initial Thermostat Settings: "){
 		input "heatingSetPoint", "decimal", title: "Heating Setpoint", required: true, defaultValue: 68.0
 		input "coolingSetPoint", "decimal", title: "Cooling Setpoint", required: true, defaultValue: 76.0
-		input(name:"thermostatMode", type:"enum", title:"Thermostat Mode", options: ["auto","heat","cool","off"], defaultValue:"auto", required: true)
+		input (name:"thermostatMode", type:"enum", title:"Thermostat Mode", options: ["auto","heat","cool","off"], defaultValue:"auto", required: true)
 		input "thermostatThreshold", "decimal", "title": "Temperature Threshold", required: true, defaultValue: 1.0
+	}
+	
+	section("Log Settings") {
+		input (name: "logLevel", type: "enum", title: "Live Logging Level: Messages with this level and higher will be logged", options: [[0: 'Disabled'], [1: 'Error'], [2: 'Warning'], [3: 'Info'], [4: 'Debug'], [5: 'Trace']], defaultValue: 3)
+		input "logDropLevelTime", "decimal", title: "Drop down to Info Level Minutes", required: true, defaultValue: 5
 	}
 }
 
 def installed() {
+	state.loggingLevel = (settings.logLevel) ? settings.logLevel.toInteger() : 3
+	if (state.logLevel >= 3) runIn(settings.logDropLevelTime.toInteger() * 60,logsOff)
+	log.info "Log Level: $state.loggingLevel"
+    log.info "LogDropLevelTime: $settings.logDropLevelTime"
+	
 	log.debug "Running installed vThermostat: $app.label"
 	state.deviceID = "jmvt" + Math.abs(new Random().nextInt() % 9999) + 1
 
@@ -66,6 +76,10 @@ def installed() {
 }
 
 def updated() {
+	state.loggingLevel = (settings.logLevel) ? settings.logLevel.toInteger() : 3
+	if (state.logLevel >= 3) runIn(settings.logDropLevelTime.toInteger() * 60,logsOff)
+	log.info "Log Level: $state.loggingLevel"
+    log.info "LogDropLevelTime: $settings.logDropLevelTime"
 	log.debug "Running updated vThermostat: $app.label"
 	initialize(getThermostat())
 }
@@ -155,4 +169,46 @@ def setOutletsState(opState) {
 		log.debug "Turned off all heat/cool outlets."
 	}
 	
+}
+
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//  logger(msg, level)
+//
+//  Wrapper function for all logging:
+//    Logs messages to the IDE (Live Logging)
+//    Configured using logLevel preferences
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+private logger(msg, level = "debug") {
+
+    switch(level) {
+        case "error":
+            if (state.loggingLevel >= 1) log.error msg
+            break
+
+        case "warn":
+            if (state.loggingLevel >= 2) log.warn msg
+            break
+
+        case "info":
+            if (state.loggingLevel >= 3) log.info msg
+            break
+
+        case "debug":
+            if (state.loggingLevel >= 4) log.debug msg
+            break
+
+        case "trace":
+            if (state.loggingLevel >= 5) log.trace msg
+            break
+
+        default:
+            log.debug msg
+            break
+    }
+}
+
+private logsOff(){
+    log.warn "Logging level set to 3"
+    device.updateSetting("logLevel",[value:"3",type:"enum"])
 }
