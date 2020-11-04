@@ -1,24 +1,28 @@
 definition(
-    name: "vThermostat Child",
-    namespace: "josh208",
-    author: "Josh McAllisster",
-    description: "Join any sensor(s) with any outlet(s) for virtual thermostat control.",
-    category: "Green Living",
-    iconUrl: "https://raw.githubusercontent.com/eliotstocker/SmartThings-VirtualThermostat-WithDTH/master/logo-small.png",
-    iconX2Url: "https://raw.githubusercontent.com/eliotstocker/SmartThings-VirtualThermostat-WithDTH/master/logo.png",
-	parent: "josh208:vThermostat Manager",
+	name: "vThermostat Child",
+	namespace: "nclark",
+	author: "Nelson Clark",
+	description: "Join any sensor(s) with any outlet(s) for virtual thermostat control.",
+	category: "Green Living",
+	iconUrl: "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/vThermostat/vThermostat-logo-small.png",
+	iconX2Url: "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/vThermostat/vThermostat-logo.png",
+	importUrl: "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/vThermostat/vThermostat-Child.groovy",
+	parent: "nclark:vThermostat Manager"
 )
 
 preferences {
 	section("Choose temperature sensor(s)... (Average value will be used if you select multiple sensors.)"){
 		input "sensors", "capability.temperatureMeasurement", title: "Sensor", multiple: true
 	}
+
 	section("Select outlet(s) to use for heating... "){
 		input "heatOutlets", "capability.switch", title: "Outlets", multiple: true
 	}
+
 	section("Select outlet(s) to use for cooling... "){
 		input "coolOutlets", "capability.switch", title: "Outlets", multiple: true
 	}
+
 	section("Initial Thermostat Settings: "){
 		input "heatingSetPoint", "decimal", title: "Heating Setpoint", required: true, defaultValue: 68.0
 		input "coolingSetPoint", "decimal", title: "Cooling Setpoint", required: true, defaultValue: 76.0
@@ -27,37 +31,32 @@ preferences {
 	}
 }
 
-def installed()
-{
-    log.debug "Running installed: $app.label"
-    state.deviceID = "jmvt" + Math.abs(new Random().nextInt() % 9999) + 1
-    
+def installed() {
+	log.debug "Running installed: $app.label"
+	state.deviceID = "jmvt" + Math.abs(new Random().nextInt() % 9999) + 1
+
 	//create the child device
 	def thermostat
-    def label = app.getLabel()
-    log.debug "create device with id: jmvt$state.deviceID, named: $label"
-    try {
-        thermostat = addChildDevice("josh208", "vThermostat Device", state.deviceID, null, [label: label, name: label, completedSetup: true])
-    } catch(e) {
-        log.error("caught exception", e)
-    }
-    
+	def label = app.getLabel()
+	log.debug "create device with id: jmvt$state.deviceID, named: $label"
+	try {
+		thermostat = addChildDevice("nclark", "vThermostat Device", state.deviceID, null, [label: label, name: label, completedSetup: true])
+	} catch(e) {
+		log.error("caught exception", e)
+	}
 	initialize(thermostat)
 }
 
-def updated()
-{
-    log.debug "Running updated: $app.label"
-    initialize(getThermostat())
+def updated() {
+	log.debug "Running updated: $app.label"
+	initialize(getThermostat())
 }
 
-def initialize(thermostatInstance)
-{
-    log.debug "Running initialize: $app.label"
+def initialize(thermostatInstance) {
+	log.debug "Running initialize: $app.label"
 
 	unsubscribe()
-    unschedule()
-
+	unschedule()
 
 	thermostatInstance.setHeatingSetpoint(heatingSetPoint)
 	thermostatInstance.setCoolingSetpoint(coolingSetPoint)
@@ -65,12 +64,11 @@ def initialize(thermostatInstance)
 	thermostatInstance.setThermostatMode(thermostatMode)
 
 	subscribe(sensors, "temperature", temperatureHandler)
-    subscribe(thermostat, "thermostatOperatingState", thermostatStateHandler)
-	
+	subscribe(thermostat, "thermostatOperatingState", thermostatStateHandler)
+
 	updateTemperature()
-		
-    runEvery1Minute(setOutletsState)
-	
+
+	runEvery1Minute(setOutletsState)
 }
 
 def getThermostat() {
@@ -87,7 +85,7 @@ def getThermostat() {
 }
 
 def uninstalled() {
-    deleteChildDevice(state.deviceID)
+	deleteChildDevice(state.deviceID)
 }
 
 def temperatureHandler(evt)
@@ -98,20 +96,19 @@ def temperatureHandler(evt)
 
 def updateTemperature() {
 	def total = 0;
-    def count = 0;
+	def count = 0;
 	def thermostat=getThermostat()
 	for(sensor in sensors) {
-    	total += sensor.currentValue("temperature")
-        log.debug "Sensor $sensor.label reported " + sensor.currentValue("temperature")
+		total += sensor.currentValue("temperature")
+		log.debug "Sensor $sensor.label reported " + sensor.currentValue("temperature")
 		count++
-    }
+	}
 	def avgTemp = total / count
 	thermostat.setTemperature(avgTemp)
-    return avgTemp
+	return avgTemp
 }
 
-def thermostatStateHandler(evt)
-{
+def thermostatStateHandler(evt) {
 	if (evt.value) {
 		log.debug "Thermostat state changed to $opState"
 		setOutletsState(opState)
@@ -119,12 +116,11 @@ def thermostatStateHandler(evt)
 		log.debug "thermostatStateHandler got an empty event"
 	}
 }
-	
-def setOutletsState(opState)
-{
+
+def setOutletsState(opState) {
 	def thermostat = getThermostat()
 	opState = opState ? opState : thermostat.currentValue("thermostatOperatingState")
-	
+
 	if (opState == "heating") {
 		coolOutlets ? coolOutlets.off() : null
 		//We need a delay to insure the off command completes as some of the heat/cool outlets could be the same.
