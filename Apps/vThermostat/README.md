@@ -19,5 +19,12 @@ This device handler allows the creation of a new Device thats shows as a thermos
 
 Enjoy!
 
+
+Things to do in upcomming releases
+- [ ] Log level preferences (TRACE / DEBUG / INFO / WARN / ERROR / NONE)
+- [ ] Use hub units to determine C° or F°
+- [ ] Simplify the settings in the device driver by hiding less common settings
+
+
 Pull requests welcome.
 Nelson Clark
