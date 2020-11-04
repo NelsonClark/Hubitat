@@ -55,42 +55,45 @@ preferences {
 }
 
 def installed() {
+	//Set Logging level and Dropt to level 3 if level is higher in set number of seconds
 	//def logLevelTime
-	state.loggingLevel = (settings.logLevel) ? settings.logLevel.toInteger() : 3
+	state.loggingLevel = (settings.logLevel) ? settings.logLevel.toInteger() : 3 //*** Can this be simplefied
 	//logLevelTime = settings.logDropLevelTime.toInteger() * 60
 	if (state.loggingLevel >= 3) runIn(settings.logDropLevelTime.toInteger() * 60,logsOff)
 	
-	logger("info", "Log Level: $state.loggingLevel")
-	logger("info", "LogDropLevelTime: $settings.logDropLevelTime")
+	logger("trace", "Installed LogLevel: $state.loggingLevel")
+	logger("trace", "Installed LogDropLevelTime: $settings.logDropLevelTime")
 	
-	logger("debug", "Running installed vThermostat: $app.label")
+	logger("trace", "Installed Running vThermostat: $app.label")
 	state.deviceID = "jmvt" + Math.abs(new Random().nextInt() % 9999) + 1
 
-	//create the child device
+	//Create the child device
 	def thermostat
 	def label = app.getLabel()
-	logger("debug", "Creating vThermostat : $label device id: jmvt$state.deviceID")
+	logger("info", "Creating vThermostat : ${label} with device id: jmvt${state.deviceID}") //*** What is this jmvt in front of deviceID
 	try {
-		thermostat = addChildDevice("nclark", "vThermostat Device", state.deviceID, null, [label: label, name: label, completedSetup: true])
+		//** Should we add isComponent in the properties of the child device to make sure we can't remove the Device, will this make it that we can't change settings in it? 
+		thermostat = addChildDevice("nclark", "vThermostat Device", state.deviceID, null, [label: label, name: label, completedSetup: true]) //** Deprecated hubIDl no longer passed since 2.1.9
+		//thermostat = addChildDevice("nclark", "vThermostat Device", state.deviceID, [label: label, name: label, completedSetup: true]) //** This will only work with ver 2.1.9 and up, let's wait a bit
 	} catch(e) {
-//***
-		log.error("Could not create vThermostat; caught exception", e)
-//***
+		logger("error", "Error adding vThermostat child ${label}: ${e}") //*** Not 100% sure about this one, test message outside loop to be sure ***
+		//*** Original code: log.error("Could not create vThermostat; caught exception", e)
 	}
 	initialize(thermostat)
 }
 
 def updated() {
-	state.loggingLevel = (settings.logLevel) ? settings.logLevel.toInteger() : 3
+	//Update Logging level and Dropt to level 3 if level is higher in set number of seconds
+	state.loggingLevel = (settings.logLevel) ? settings.logLevel.toInteger() : 3 //*** Can this be simplefied
 	if (state.loggingLevel >= 3) runIn(settings.logDropLevelTime.toInteger() * 60,logsOff)
-	logger("info", "Log Level: $state.loggingLevel")
-	logger("info", "LogDropLevelTime: $settings.logDropLevelTime")
-	logger("debug", "Running updated vThermostat: $app.label")
+	logger("trace", "Updated LogLevel: $state.loggingLevel")
+	logger("trace", "Updated LogDropLevelTime: $settings.logDropLevelTime")
+	logger("trace", "Updated Running vThermostat: $app.label")
 	initialize(getThermostat())
 }
 
 def initialize(thermostatInstance) {
-	logger("debug", "Running initialized vThermostat: $app.label")
+	logger("trace", "Initialize Running vThermostat: $app.label")
 
 	unsubscribe()
 	unschedule()
@@ -108,22 +111,40 @@ def initialize(thermostatInstance) {
 	runEvery1Minute(setOutletsState)
 }
 
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// getThermostat
+//     Gets current childDeviceWrapper from list of childs
+//
+// Signature(s)
+//     getThermostat()
+//
+// Parameters
+//     None
+//
+// Returns
+//     ChildDeviceWrapper
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 def getThermostat() {
+	// Does this instance have a DeviceID
 	if (!state.deviceID){
-		logger("debug", "getThermostat cannot access deviceID!")
+		//No DeviceID available what is going on, has the device been removed?
+		logger("error", "getThermostat cannot access deviceID!")
 	} else {
-		logger("debug", "getThermostat for device " + state.deviceID)
+		//We have a deviceID, continue and return it
+		logger("trace", "getThermostat for device " + state.deviceID)
 
 		def child = getChildDevices().find {
 			d -> d.deviceNetworkId.startsWith(state.deviceID)
 		}
+		logger("trace","getThrmostat child is ${child}")
 		return child
 	}
 }
 
 def uninstalled() {
 	deleteChildDevice(state.deviceID)
-	logger("trace", "Child Device " + state.deviceID + " removed")
+	logger("info", "Child Device " + state.deviceID + " removed")
 }
 
 def temperatureHandler(evt)
@@ -148,10 +169,10 @@ def updateTemperature() {
 
 def thermostatStateHandler(evt) {
 	if (evt.value) {
-		logger("debug", "Thermostat state changed to $opState")
+		logger("warn", "Thermostat state changed to $opState")
 		setOutletsState(opState)
 	} else {
-		logger("debug", "thermostatStateHandler got an empty event")
+		logger("warn", "thermostatStateHandler got an empty event")
 	}
 }
 
