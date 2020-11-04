@@ -15,7 +15,7 @@ preferences {
 		section("Devices") {
 		}
 		section {
-			app(name: "thermostats", appName: "vThermostat Child", namespace: "josh208", title: "Add vThermostat", multiple: true)
+			app(name: "thermostats", appName: "vThermostat Child", namespace: "nclark", title: "Add vThermostat", multiple: true)
 		}
 	}
 }
