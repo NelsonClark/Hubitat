@@ -4,9 +4,9 @@ definition(
 	author: "Nelson Clark",
 	description: "Join any sensor(s) with any outlet(s) for virtual thermostat control.",
 	category: "Green Living",
-	iconUrl: "https://raw.githubusercontent.com/josh208/hubitat/master/vThermostat/vThermostat-logo-small.png",
-	iconX2Url: "https://raw.githubusercontent.com/josh208/hubitat/master/vThermostat/vThermostat-logo.png",
-	importUrl: ""
+	iconUrl: "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/vThermostat/vThermostat-logo-small.png",
+	iconX2Url: "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/vThermostat/vThermostat-logo.png",
+	importUrl: "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/vThermostat/vThermostat-Parent.groovy"
 	singleInstance: true
 )
 
