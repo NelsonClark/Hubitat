@@ -31,7 +31,7 @@ definition(
 
 preferences {
 	section("Select temperature sensor(s)... (Average value will be used if you select multiple sensors)"){
-		input "sensors", "capability.temperatureMeasurement", title: "Sensor", multiple: true
+		input "sensors", "capability.temperatureMeasurement", title: "Sensor", multiple: true, required: true
 	}
 
 	section("Select outlet(s) to use for heating... "){
@@ -57,22 +57,14 @@ preferences {
 
 
 def installed() {
-	//Set Logging level and Dropt to level 3 if level is higher in set number of seconds
-	//def logLevelTime
-	state.loggingLevel = (settings.logLevel) ? settings.logLevel.toInteger() : 3 //*** Can this be simplefied
-	//logLevelTime = settings.logDropLevelTime.toInteger() * 60
-	if (state.loggingLevel >= 3) runIn(settings.logDropLevelTime.toInteger() * 60, logsDropLevel)
-	
-	logger("trace", "Installed LogLevel: $state.loggingLevel")
-	logger("trace", "Installed LogDropLevelTime: $settings.logDropLevelTime")
 	
 	logger("trace", "Installed Running vThermostat: $app.label")
-	state.deviceID = "jmvt" + Math.abs(new Random().nextInt() % 9999) + 1
+	state.deviceID = "vt" + Math.abs(new Random().nextInt() % 9999) + 1
 
 	//Create the child device
 	def thermostat
 	def label = app.getLabel()
-	logger("info", "Creating vThermostat : ${label} with device id: jmvt${state.deviceID}") //*** What is this jmvt in front of deviceID
+	logger("info", "Creating vThermostat : ${label} with device id: ${state.deviceID}")
 	try {
 		//** Should we add isComponent in the properties of the child device to make sure we can't remove the Device, will this make it that we can't change settings in it? 
 		thermostat = addChildDevice("nclark", "vThermostat Device", state.deviceID, null, [label: label, name: label, completedSetup: true]) //** Deprecated hubIDl no longer passed since 2.1.9
@@ -86,12 +78,6 @@ def installed() {
 
 
 def updated() {
-	//Update Logging level and Dropt to level 3 if level is higher in set number of seconds
-	state.loggingLevel = (settings.logLevel) ? settings.logLevel.toInteger() : 3 //*** Can this be simplefied
-	if (state.loggingLevel >= 3) runIn(settings.logDropLevelTime.toInteger() * 60, logsDropLevel)
-	logger("trace", "Updated LogLevel: $state.loggingLevel")
-	logger("trace", "Updated LogDropLevelTime: $settings.logDropLevelTime")
-	logger("trace", "Updated Running vThermostat: $app.label")
 	initialize(getThermostat())
 }
 
@@ -105,6 +91,7 @@ def uninstalled() {
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // initialize
 //     Set preferences in the associated device and subscribe to the selected sensors and thermostat device
+//     Also set logging preferences
 //
 // Signature(s)
 //     initialize(thermostatInstance)
@@ -122,6 +109,17 @@ def initialize(thermostatInstance) {
 	// First we need tu unsubscribe and unschedule any previous settings we had
 	unsubscribe()
 	unschedule()
+
+	//Set Logging level and Dropt to level 3 if level is higher in set number of seconds
+	state.loggingLevel = (settings.logLevel) ? settings.logLevel.toInteger() : 3 //*** Can this be simplefied
+	state.logLevelTime = settings.logDropLevelTime.toInteger() * 60
+	if (state.loggingLevel >= 3) {
+		logger("trace", "Installed runIn $state.logLevelTime")
+		runIn(state.logLevelTime, logsDropLevel)
+	}
+
+	logger("trace", "Installed LogLevel: $state.loggingLevel")
+	logger("trace", "Installed LogDropLevelTime: $settings.logDropLevelTime")
 
 	// Set device settings
 	thermostatInstance.setHeatingSetpoint(heatingSetPoint)
@@ -169,7 +167,7 @@ def getThermostat() {
 		def child = getChildDevices().find {
 			d -> d.deviceNetworkId.startsWith(state.deviceID)
 		}
-		logger("trace","getThrmostat child is ${child}")
+		logger("trace","getThermostat child is ${child}")
 		return child
 	}
 }
@@ -248,9 +246,9 @@ def updateTemperature() {
 def thermostatStateHandler(evt) {
 	
 	// Thermostat device changed the state (heating / cooling or other), go change state of outlets accordingly
-	if (evt.value) {
-		logger("warn", "Thermostat state changed to $opState")
-		setOutletsState(opState)
+	if (evt.value) {		
+        logger("warn", "Thermostat state changed to ${opState}")
+        setOutletsState(opState)
 	} else {
 		logger("warn", "thermostatStateHandler got an empty event")
 	}
@@ -308,7 +306,7 @@ def setOutletsState(opState) {
 //     None
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-private logger(level, msg) {
+def logger(level, msg) {
 
 	switch(level) {
 		case "error":
@@ -352,9 +350,9 @@ private logger(level, msg) {
 //     None
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-private logsDropLevel(){
-	log.warn "Logging level set to 3"
-	updateSetting("logLevel",[value:"3",type:"string"]) //** Do we need to change just the setting or also/just the state variable?
+def logsDropLevel() {
+	logger("warn", "Logging level set to 3")
+	//updateSetting("logLevel",[value:"3",type:"string"]) //** Do we need to change just the setting or also/just the state variable?
 	//** device.updateSetting("logLevel",[value:"3",type:"string"])
 	logger("trace","New LogLevel: ${settings.logLevel}")
 }
