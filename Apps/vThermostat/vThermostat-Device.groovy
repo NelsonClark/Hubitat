@@ -81,8 +81,26 @@ def updated() {
 def parse(String description) {
 }
 
+
+//************************************************************
+// Name
+//     Does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//************************************************************
 def evaluateMode() {
+	// Run this loop every minute to see how everything is going
 	runIn(60, 'evaluateMode')
+	
+	// Let's fetch all required thermostat settings
 	def temp = device.currentValue("temperature")
 	def heatingSetpoint = device.currentValue("heatingSetpoint");
 	def coolingSetpoint = device.currentValue("coolingSetpoint");
@@ -90,13 +108,19 @@ def evaluateMode() {
 	def current = device.currentValue("thermostatOperatingState")
 	def mode = device.currentValue("thermostatMode")
 
+	//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	//Deadman safety. Make sure that we don't keep running if temp is not getting updated.
+	//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	// Let's get the current time in miliseconds
 	def now = new Date().getTime()
+	// Let's get the time of the last temperature update we got
 	def lastUpdate = Date.parse("E MMM dd H:m:s z yyyy", device.currentValue("lastTempUpdate")).getTime()
-
-	def maxInterval = device.currentValue("maxUpdateInterval") ?: 180 //set a somewhat sain limit of 3 hours
+	// Get maxInterval, if higher than the safety preset, set to preset of 180 minutes (3 hours)
+	def maxInterval = device.currentValue("maxUpdateInterval") ?: 180
+	// If fetched maxInternal from user is higher than 180, set to 180
 	if (maxInterval > 180) maxinterval = 180
-	maxInterval = maxInterval * 1000 * 60 //convert maxUpdateInterval (in minutes) to milliseconds
+	//convert maxUpdateInterval (in minutes) to milliseconds
+	maxInterval = maxInterval * 1000 * 60
 
 	log.debug "now=$now, lastUpdate=$lastUpdate, maxInterval=$maxInterval, heatingSetpoint=$heatingSetpoint, coolingSetpoint=$coolingSetpoint, temp=$temp"
 
@@ -114,39 +138,74 @@ def evaluateMode() {
 		return
 	}
 
-	if ( !threshold ) {
-		log.debug "Threshold was not set. Not doing anything..."
-		return
-	}
-
+	// set the default to idle (safer to have idle than anything else if something goes wrong)
 	def callFor = "idle"
 
-	if (mode in ["heat","emergency heat"]) {
-		sendEvent(name: "thermostatSetpoint", value: heatingSetpoint)
-		if ( (heatingSetpoint - temp) >= threshold) callFor = "heating"
-	} else if (mode == "cool") {
-		sendEvent(name: "thermostatSetpoint", value: coolingSetpoint)
-		if ( (temp - coolingSetpoint) >= threshold) callFor = "cooling"
-	} else if (mode == "auto") {
-		if (temp > coolingSetpoint) { 
-			//time to cool
-			sendEvent(name: "thermostatSetpoint", value: coolingSetpoint)
-			if ( (temp - coolingSetpoint) >= threshold) callFor = "cooling"
-		} else { 
-			//time to heat
+	// Do we have a treshhold set, if not we do nothing 
+	// ** This has been changed from original code so that if no treshold is set, the thermostat will stay in idle state
+	if ( !threshold ) {
+		log.debug "Threshold was not set. Not doing anything..."
+	} else {
+		if (mode in ["heat","emergency heat"]) {
+			// Mode is set to heat, let's see if we need to heat or not
 			sendEvent(name: "thermostatSetpoint", value: heatingSetpoint)
 			if ( (heatingSetpoint - temp) >= threshold) callFor = "heating"
+		} else if (mode == "cool") {
+			// Mode is set to cool, let's see if we need to cool or not
+			sendEvent(name: "thermostatSetpoint", value: coolingSetpoint)
+			if ( (temp - coolingSetpoint) >= threshold) callFor = "cooling"
+		} else if (mode == "auto") {
+			if (temp > coolingSetpoint) { 
+				// Mode is set to auto, let's see if we need to cool
+				sendEvent(name: "thermostatSetpoint", value: coolingSetpoint)
+				if ( (temp - coolingSetpoint) >= threshold) callFor = "cooling"
+			} else { 
+				// Mode is set to auto, let's see if we need to cool
+				sendEvent(name: "thermostatSetpoint", value: heatingSetpoint)
+				if ( (heatingSetpoint - temp) >= threshold) callFor = "heating"
+			}
 		}
 	}
 
+	// Send Event on what we are doing, idle, cooling, heating
 	log.debug "evaluateMode() : threshold=$threshold, actingMode=$mode, origState=$current, newState = $callFor"
 	sendEvent(name: "thermostatOperatingState", value: callFor)
 }
 
+
+//************************************************************
+// Name
+//     Does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//************************************************************
 def setHeatingSetpoint(degreesF){
 	setHeatingSetpoint(degreesF.toDouble())
 }
 
+
+//************************************************************
+// Name
+//     Does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//************************************************************
 def setHeatingSetpoint(Double degreesF) {
 	def min = device.currentValue("minHeatTemp")
 	def max = device.currentValue("maxHeatTemp")
@@ -159,10 +218,40 @@ def setHeatingSetpoint(Double degreesF) {
 	runIn(2,'evaluateMode')
 }
 
+
+//************************************************************
+// Name
+//     Does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//************************************************************
 def setCoolingSetpoint(degreesF){
 	setCoolingSetpoint(degreesF.toDouble())
 }
 
+
+//************************************************************
+// Name
+//     Does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//************************************************************
 def setCoolingSetpoint(Double degreesF) {
 	def min = device.currentValue("minCoolTemp")
 	def max = device.currentValue("maxCoolTemp")
@@ -175,84 +264,322 @@ def setCoolingSetpoint(Double degreesF) {
 	runIn(2,'evaluateMode')
 }
 
+
+//************************************************************
+// Name
+//     Does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//************************************************************
 def setThermostatThreshold(Double degreesF) {
 	log.debug "setThermostatThreshold($degreesF)"
 	sendEvent(name: "thermostatThreshold", value: degreesF)
 	runIn(2,'evaluateMode')
 }
 
+
+//************************************************************
+// Name
+//     Does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//************************************************************
 def setMaxUpdateInterval(BigDecimal minutes) {
 	sendEvent(name: "maxUpdateInterval", value: minutes)
 	runIn(2,'evaluateMode')
 }
 
+
+//************************************************************
+// Name
+//     Does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//************************************************************
 def setThermostatMode(String value) {
 	sendEvent(name: "thermostatMode", value: value)
 	runIn(2,'evaluateMode')
 }
 
+
+//************************************************************
+// Name
+//     Does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//************************************************************
 def off() {
 	sendEvent(name: "thermostatMode", value: "off")
 	runIn(2,'evaluateMode')
 }
 
+
+//************************************************************
+// Name
+//     Does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//************************************************************
 def emergencyStop() {
 	sendEvent(name: "thermostatMode", value: "emergency stop")
 	runIn(2,'evaluateMode')
 }
 
+
+//************************************************************
+// Name
+//     Does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//************************************************************
 def heat() {
 	sendEvent(name: "thermostatMode", value: "heat")
 	runIn(2,'evaluateMode')
 }
 
+
+//************************************************************
+// Name
+//     Does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//************************************************************
 def auto() {
 	sendEvent(name: "thermostatMode", value: "auto")
 	runIn(2,'evaluateMode')
 }
 
+
+//************************************************************
+// Name
+//     Does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//************************************************************
 def emergencyHeat() {
 	sendEvent(name: "thermostatMode", value: "emergency heat")
 	runIn(2,'evaluateMode')
 }
 
+
+//************************************************************
+// Name
+//     Does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//************************************************************
 def cool() {
 	sendEvent(name: "thermostatMode", value: "cool")
 	runIn(2,'evaluateMode')
 }
 
+
+//************************************************************
+// Name
+//     Does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//************************************************************
 def poll() {
 	null
 }
 
 
+//************************************************************
+// Name
+//     Does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//************************************************************
 def setTemperature(value) {
 	sendEvent(name:"temperature", value: value)
 	sendEvent(name: "lastTempUpdate", value: new Date() )
 	runIn(2,'evaluateMode')
 }
 
+
+//************************************************************
+// Name
+//     Does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//************************************************************
 def heatUp() {
 	def ts = device.currentValue("heatingSetpoint")
 	setHeatingSetpoint( ts + 1 )
 }
 
+
+//************************************************************
+// Name
+//     Does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//************************************************************
 def heatDown() {
 	def ts = device.currentValue("heatingSetpoint")
 	setHeatingSetpoint( ts - 1 )
 }
 
 
+//************************************************************
+// Name
+//     Does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//************************************************************
 def coolUp() {
 	def ts = device.currentValue("heatingSetpoint")
 	setCoolingSetpoint( ts + 1 )
 }
 
+
+//************************************************************
+// Name
+//     Does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//************************************************************
 def coolDown() {
 	def ts = device.currentValue("heatingSetpoint")
 	setCoolingSetpoint( ts - 1 )
 }
 
+
+//************************************************************
+// Name
+//     Does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//************************************************************
 def setMinCoolTemp(Double degreesF) {
 	def t = device.currentValue("coolingSetpoint")
 	sendEvent(name: "minCoolTemp", value: degreesF)
@@ -261,6 +588,21 @@ def setMinCoolTemp(Double degreesF) {
 	}
 }
 
+
+//************************************************************
+// Name
+//     Does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//************************************************************
 def setMaxCoolTemp(Double degreesF) {
 	def t = device.currentValue("coolingSetpoint")
 	sendEvent(name: "maxCoolTemp", value: degreesF)
@@ -269,6 +611,21 @@ def setMaxCoolTemp(Double degreesF) {
 	}
 }
 
+
+//************************************************************
+// Name
+//     Does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//************************************************************
 def setMinHeatTemp(Double degreesF) {
 	def t = device.currentValue("heatingSetpoint")
 	sendEvent(name: "minHeatTemp", value: degreesF)
@@ -277,6 +634,21 @@ def setMinHeatTemp(Double degreesF) {
 	}
 }
 
+
+//************************************************************
+// Name
+//     Does
+//
+// Signature(s)
+//     
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//************************************************************
 def setMaxHeatTemp(Double degreesF) {
 	def t = device.currentValue("heatingSetpoint")
 	sendEvent(name: "maxHeatTemp", value: degreesF)
