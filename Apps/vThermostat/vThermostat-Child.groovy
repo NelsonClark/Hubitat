@@ -88,7 +88,7 @@ def uninstalled() {
 }
 
 
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//************************************************************
 // initialize
 //     Set preferences in the associated device and subscribe to the selected sensors and thermostat device
 //     Also set logging preferences
@@ -102,7 +102,7 @@ def uninstalled() {
 // Returns
 //     None
 //
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//************************************************************
 def initialize(thermostatInstance) {
 	logger("trace", "Initialize Running vThermostat: $app.label")
 
@@ -111,21 +111,21 @@ def initialize(thermostatInstance) {
 	unschedule()
 
 	//Set Logging level and Dropt to level 3 if level is higher in set number of seconds
-	state.loggingLevel = (settings.logLevel) ? settings.logLevel.toInteger() : 3 //*** Can this be simplefied
-	state.logLevelTime = settings.logDropLevelTime.toInteger() * 60
-	if (state.loggingLevel >= 3) {
-		logger("trace", "Installed runIn $state.logLevelTime")
-		runIn(state.logLevelTime, logsDropLevel)
+	loggingLevel = (settings.logLevel) ? settings.logLevel.toInteger() : 3
+	if (loggingLevel >= 3) {
+		logger("trace", "Initialize runIn $settings.logDropLevelTime")
+		runIn(settings.logDropLevelTime.toInteger() * 60, logsDropLevel)
 	}
 
-	logger("trace", "Installed LogLevel: $state.loggingLevel")
-	logger("trace", "Installed LogDropLevelTime: $settings.logDropLevelTime")
+	logger("warn", "Initialize LogLevel: ${app.getSetting('logLevel')}")
+	logger("trace", "Initialize LogDropLevelTime: $settings.logDropLevelTime")
 
 	// Set device settings
 	thermostatInstance.setHeatingSetpoint(heatingSetPoint)
 	thermostatInstance.setCoolingSetpoint(coolingSetPoint)
 	thermostatInstance.setThermostatThreshold(thermostatThreshold)
 	thermostatInstance.setThermostatMode(thermostatMode)
+    //thermostatInstance.setLogLevel(loggingLevel)
 
 	// Subscribe to the new sensor(s) and device
 	subscribe(sensors, "temperature", temperatureHandler)
@@ -139,7 +139,7 @@ def initialize(thermostatInstance) {
 }
 
 
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//************************************************************
 // getThermostat
 //     Gets current childDeviceWrapper from list of childs
 //
@@ -152,7 +152,7 @@ def initialize(thermostatInstance) {
 // Returns
 //     ChildDeviceWrapper
 //
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//************************************************************
 def getThermostat() {
 	
 	// Does this instance have a DeviceID
@@ -173,7 +173,7 @@ def getThermostat() {
 }
 
 
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//************************************************************
 // temperatureHandler
 //     Handles a sensor temperature change event
 //     Do not call this directly, only used to handle events
@@ -187,7 +187,7 @@ def getThermostat() {
 // Returns
 //     None
 //
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//************************************************************
 def temperatureHandler(evt)
 {
 	logger("debug", "Temperature changed to" + evt.doubleValue)
@@ -195,7 +195,7 @@ def temperatureHandler(evt)
 }
 
 
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//************************************************************
 // updateTemperature
 //     Update device current temperature based on selected sensors
 //
@@ -208,7 +208,7 @@ def temperatureHandler(evt)
 // Returns
 //     None
 //
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//************************************************************
 def updateTemperature() {
 	def total = 0;
 	def count = 0;
@@ -228,7 +228,7 @@ def updateTemperature() {
 }
 
 
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//************************************************************
 // thermostatStateHandler
 //     Handles a thermostat state change event
 //     Do not call this directly, only used to handle events
@@ -242,7 +242,7 @@ def updateTemperature() {
 // Returns
 //     None
 //
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//************************************************************
 def thermostatStateHandler(evt) {
 	
 	// Thermostat device changed the state (heating / cooling or other), go change state of outlets accordingly
@@ -255,7 +255,7 @@ def thermostatStateHandler(evt) {
 }
 
 
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//************************************************************
 // setOutletsState
 //     Set the different outlets used for heating or cooling
 //
@@ -268,7 +268,7 @@ def thermostatStateHandler(evt) {
 // Returns
 //     None
 //
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//************************************************************
 def setOutletsState(opState) {
 	def thermostat = getThermostat()
 	opState = opState ? opState : thermostat.currentValue("thermostatOperatingState")
@@ -291,7 +291,7 @@ def setOutletsState(opState) {
 }
 
 
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//************************************************************
 // logger
 //     Wrapper function for all logging with level control via preferences
 //
@@ -305,28 +305,28 @@ def setOutletsState(opState) {
 // Returns
 //     None
 //
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//************************************************************
 def logger(level, msg) {
 
 	switch(level) {
 		case "error":
-			if (state.loggingLevel >= 1) log.error msg
+			if (loggingLevel >= 1) log.error msg
 			break
 
 		case "warn":
-			if (state.loggingLevel >= 2) log.warn msg
+			if (loggingLevel >= 2) log.warn msg
 			break
 
 		case "info":
-			if (state.loggingLevel >= 3) log.info msg
+			if (loggingLevel >= 3) log.info msg
 			break
 
 		case "debug":
-			if (state.loggingLevel >= 4) log.debug msg
+			if (loggingLevel >= 4) log.debug msg
 			break
 
 		case "trace":
-			if (state.loggingLevel >= 5) log.trace msg
+			if (loggingLevel >= 5) log.trace msg
 			break
 
 		default:
@@ -336,7 +336,7 @@ def logger(level, msg) {
 }
 
 
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//************************************************************
 // logsDropLevel
 //     Turn down logLevel to 3 in this app and it's device and log the change
 //
@@ -349,10 +349,10 @@ def logger(level, msg) {
 // Returns
 //     None
 //
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//************************************************************
 def logsDropLevel() {
-	logger("warn", "Logging level set to 3")
-	//updateSetting("logLevel",[value:"3",type:"string"]) //** Do we need to change just the setting or also/just the state variable?
-	//** device.updateSetting("logLevel",[value:"3",type:"string"])
-	logger("trace","New LogLevel: ${settings.logLevel}")
+	app.updateSetting("logLevel",[type:"enum", value:"3"])
+	//thermostatInstance.setLogLevel(loggingLevel)
+	loggingLevel = app.getSetting('logLevel').toInteger()
+	logger("warn","Logging level set to $loggingLevel")
 }
