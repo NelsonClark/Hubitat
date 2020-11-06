@@ -122,16 +122,16 @@ def evaluateMode() {
 	//convert maxUpdateInterval (in minutes) to milliseconds
 	maxInterval = maxInterval * 1000 * 60
 
-	log.debug "now=$now, lastUpdate=$lastUpdate, maxInterval=$maxInterval, heatingSetpoint=$heatingSetpoint, coolingSetpoint=$coolingSetpoint, temp=$temp"
+	logger("debug", "now=$now, lastUpdate=$lastUpdate, maxInterval=$maxInterval, heatingSetpoint=$heatingSetpoint, coolingSetpoint=$coolingSetpoint, temp=$temp")
 
 	if (! (mode in ["emergency stop", "off"]) && now - lastUpdate >= maxInterval ) {
-		log.info("maxUpdateInterval exceeded. Setting emergencyStop mode")
+		logger("info", "maxUpdateInterval exceeded. Setting emergencyStop mode")
 		sendEvent(name: "preEmergencyMode", value: mode)
 		sendEvent(name: "thermostatMode", value: "emergency stop")
 		runIn(2, 'evaluateMode')
 		return
 	} else if (mode == "emergency stop" && now - lastUpdate < maxInterval && device.currentValue("preEmergencyMode")) {
-		log.info("Autorecovered from emergencyStop. Resetting to previous mode.")
+		logger("info", "Autorecovered from emergencyStop. Resetting to previous mode.")
 		sendEvent(name: "thermostatMode", value: device.currentValue("preEmergencyMode"))
 		sendEvent(name: "preEmergencyMode", value: "")
 		runIn(2, 'evaluateMode')
@@ -144,7 +144,7 @@ def evaluateMode() {
 	// Do we have a treshhold set, if not we do nothing 
 	// ** This has been changed from original code so that if no treshold is set, the thermostat will stay in idle state
 	if ( !threshold ) {
-		log.debug "Threshold was not set. Not doing anything..."
+		logger("debug", "Threshold was not set. Not doing anything...")
 	} else {
 		if (mode in ["heat","emergency heat"]) {
 			// Mode is set to heat, let's see if we need to heat or not
@@ -168,7 +168,7 @@ def evaluateMode() {
 	}
 
 	// Send Event on what we are doing, idle, cooling, heating
-	log.debug "evaluateMode() : threshold=$threshold, actingMode=$mode, origState=$current, newState = $callFor"
+	logger("debug", "evaluateMode() : threshold=$threshold, actingMode=$mode, origState=$current, newState = $callFor")
 	sendEvent(name: "thermostatOperatingState", value: callFor)
 }
 
@@ -210,10 +210,10 @@ def setHeatingSetpoint(Double degreesF) {
 	def min = device.currentValue("minHeatTemp")
 	def max = device.currentValue("maxHeatTemp")
 	if (degreesF > max || degreesF < min) {
-		log.debug "setHeatingSetpoint is ignoring out of range request ($degreesF)."
+		logger("debug", "setHeatingSetpoint is ignoring out of range request ($degreesF).")
 		return
 	}
-	log.debug "setHeatingSetpoint($degreesF)"
+	logger("debug", "setHeatingSetpoint($degreesF)")
 	sendEvent(name: "heatingSetpoint", value: degreesF)
 	runIn(2,'evaluateMode')
 }
@@ -256,10 +256,10 @@ def setCoolingSetpoint(Double degreesF) {
 	def min = device.currentValue("minCoolTemp")
 	def max = device.currentValue("maxCoolTemp")
 	if (degreesF > max || degreesF < min) {
-		log.debug "setCoolingSetpoint is ignoring out of range request ($degreesF)."
+		logger("debug", "setCoolingSetpoint is ignoring out of range request ($degreesF).")
 		return
 	}
-	log.debug "setCoolingSetpoint($degreesF)"
+	logger("debug", "setCoolingSetpoint($degreesF)")
 	sendEvent(name: "coolingSetpoint", value: degreesF)
 	runIn(2,'evaluateMode')
 }
@@ -280,7 +280,7 @@ def setCoolingSetpoint(Double degreesF) {
 //
 //************************************************************
 def setThermostatThreshold(Double degreesF) {
-	log.debug "setThermostatThreshold($degreesF)"
+	logger("debug", "setThermostatThreshold($degreesF)")
 	sendEvent(name: "thermostatThreshold", value: degreesF)
 	runIn(2,'evaluateMode')
 }
@@ -655,4 +655,69 @@ def setMaxHeatTemp(Double degreesF) {
 	if (t > degreesF) {
 		setHeatingSetpoint(degreesF)
 	}
+}
+
+
+//************************************************************
+// logger
+//     Wrapper function for all logging with level control via preferences
+//
+// Signature(s)
+//     logger(String level, String msg)
+//
+// Parameters
+//     level : Error level string
+//     msg : Message to log
+//
+// Returns
+//     None
+//
+//************************************************************
+def logger(level, msg) {
+
+	switch(level) {
+		case "error":
+			if (state.loggingLevel >= 1) log.error msg
+			break
+
+		case "warn":
+			if (state.loggingLevel >= 2) log.warn msg
+			break
+
+		case "info":
+			if (state.loggingLevel >= 3) log.info msg
+			break
+
+		case "debug":
+			if (state.loggingLevel >= 4) log.debug msg
+			break
+
+		case "trace":
+			if (state.loggingLevel >= 5) log.trace msg
+			break
+
+		default:
+			log.debug msg
+			break
+	}
+}
+
+
+//************************************************************
+// logsDropLevel
+//     Turn down logLevel to 3 in this app and it's device and log the change
+//
+// Signature(s)
+//     logsDropLevel()
+//
+// Parameters
+//     None
+//
+// Returns
+//     None
+//
+//************************************************************
+def setLogLevel(int level) {
+	state.loggingLevel = level
+	logger("warn","Device logging level set to $state.loggingLevel")
 }
