@@ -111,13 +111,13 @@ def initialize(thermostatInstance) {
 	unschedule()
 
 	//Set Logging level and Dropt to level 3 if level is higher in set number of seconds
-	loggingLevel = (settings.logLevel) ? settings.logLevel.toInteger() : 3
+	int loggingLevel = (settings.logLevel) ? settings.logLevel.toInteger() : 3
 	if (loggingLevel >= 3) {
 		logger("trace", "Initialize runIn $settings.logDropLevelTime")
 		runIn(settings.logDropLevelTime.toInteger() * 60, logsDropLevel)
 	}
 
-	logger("warn", "Initialize LogLevel: ${app.getSetting('logLevel')}")
+	logger("warn", "App logging level set to $loggingLevel $logingLevel")
 	logger("trace", "Initialize LogDropLevelTime: $settings.logDropLevelTime")
 
 	// Set device settings
@@ -125,7 +125,7 @@ def initialize(thermostatInstance) {
 	thermostatInstance.setCoolingSetpoint(coolingSetPoint)
 	thermostatInstance.setThermostatThreshold(thermostatThreshold)
 	thermostatInstance.setThermostatMode(thermostatMode)
-    //thermostatInstance.setLogLevel(loggingLevel)
+	thermostatInstance.setLogLevel(loggingLevel)
 
 	// Subscribe to the new sensor(s) and device
 	subscribe(sensors, "temperature", temperatureHandler)
@@ -354,5 +354,5 @@ def logsDropLevel() {
 	app.updateSetting("logLevel",[type:"enum", value:"3"])
 	//thermostatInstance.setLogLevel(loggingLevel)
 	loggingLevel = app.getSetting('logLevel').toInteger()
-	logger("warn","Logging level set to $loggingLevel")
+	logger("warn","App logging level set to $loggingLevel $logingLevel")
 }
