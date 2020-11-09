@@ -24,8 +24,8 @@ metadata {
 		importUrl: "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/vThermostat/vThermostat-Device.groovy") {
 		
 		capability "Thermostat"
-		capability "Thermostat Heating Setpoint"
-		capability "Thermostat Setpoint"
+		//capability "Thermostat Heating Setpoint"
+		//capability "Thermostat Setpoint"
 		capability "Sensor"
 		capability "Actuator"
 
