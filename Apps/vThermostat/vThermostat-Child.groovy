@@ -352,7 +352,7 @@ def logger(level, msg) {
 //************************************************************
 def logsDropLevel() {
 	app.updateSetting("logLevel",[type:"enum", value:"3"])
-	//thermostatInstance.setLogLevel(loggingLevel)
+	getThermostat().setLogLevel(loggingLevel)
 	loggingLevel = app.getSetting('logLevel').toInteger()
 	logger("warn","App logging level set to $loggingLevel $logingLevel")
 }
