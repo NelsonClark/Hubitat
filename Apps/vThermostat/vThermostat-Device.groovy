@@ -663,4 +663,3 @@ def convertToHubTempScale(Double value) {
 		return Math.round(celsiusToFahrenheit(value))
 	}
 }
-
