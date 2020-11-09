@@ -35,4 +35,5 @@ Things to do in upcomming releases...
 - [ ] Log level preferences (TRACE / DEBUG / INFO / WARN / ERROR / NONE)
 - [ ] Use hub units to determine C° or F°
 - [ ] Simplify the settings in the device driver by hiding less common settings
+- [ ] Auto-learning for rooms that heat or cool faster to limit overshoot and undershoot
 
