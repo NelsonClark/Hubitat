@@ -57,7 +57,8 @@ preferences {
 
 
 def installed() {
-	
+    
+	int loggingLevel = (settings.logLevel) ? settings.logLevel.toInteger() : 3
 	logger("trace", "Installed Running vThermostat: $app.label")
 	state.deviceID = "vt" + Math.abs(new Random().nextInt() % 9999) + 1
 
@@ -110,14 +111,14 @@ def initialize(thermostatInstance) {
 	unsubscribe()
 	unschedule()
 
-	//Set Logging level and Dropt to level 3 if level is higher in set number of seconds
-	int loggingLevel = (settings.logLevel) ? settings.logLevel.toInteger() : 3
+	//Set Logging level and Drop to level 3 if level is higher in set number of seconds
+	loggingLevel = (settings.logLevel) ? settings.logLevel.toInteger() : 3
 	if (loggingLevel >= 3) {
 		logger("trace", "Initialize runIn $settings.logDropLevelTime")
 		runIn(settings.logDropLevelTime.toInteger() * 60, logsDropLevel)
 	}
 
-	logger("warn", "App logging level set to $loggingLevel $logingLevel")
+	logger("warn", "App logging level set to $loggingLevel")
 	logger("trace", "Initialize LogDropLevelTime: $settings.logDropLevelTime")
 
 	// Set device settings
@@ -338,7 +339,7 @@ def logger(level, msg) {
 
 //************************************************************
 // logsDropLevel
-//     Turn down logLevel to 3 in this app and it's device and log the change
+//     Turn down logLevel to 3 in this app/device and log the change
 //
 // Signature(s)
 //     logsDropLevel()
@@ -352,7 +353,7 @@ def logger(level, msg) {
 //************************************************************
 def logsDropLevel() {
 	app.updateSetting("logLevel",[type:"enum", value:"3"])
-	getThermostat().setLogLevel(loggingLevel)
+	getThermostat().setLogLevel(3)
 	loggingLevel = app.getSetting('logLevel').toInteger()
-	logger("warn","App logging level set to $loggingLevel $logingLevel")
+	logger("warn","App logging level set to $loggingLevel")
 }
