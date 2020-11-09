@@ -23,8 +23,6 @@ metadata {
 		importUrl: "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/vThermostat/vThermostat-Device.groovy") {
 		
 		capability "Thermostat"
-		capability "Thermostat Heating Setpoint" //** Is this actually needed, and should not have spaces.
-		capability "Thermostat Setpoint" //** Is this actually needed, and should not have spaces.
 		capability "Sensor"
 		capability "Actuator"
 
@@ -55,7 +53,7 @@ metadata {
 def installed() {
 	
 	// We need to transform everything to the base Unit C
-	// Then add setting according to hub settings with a test mode for testing it
+	// Then add variable according to hub settings
 	
 	sendEvent(name: "minCoolTemp", value: 60, unit: "F") // 15.5°C
 	sendEvent(name: "maxCoolTemp", value: 95, unit: "F") // 35°C
