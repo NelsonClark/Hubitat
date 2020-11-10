@@ -1,5 +1,5 @@
 /*
- *  vThermostat Device Driver
+ *  Advanced Virtual Thermostat Device Driver
  *  Project URL: https://github.com/NelsonClark/Hubitat/tree/main/Apps/vThermostat
  *  Copyright 2020 Nelson Clark
  *
@@ -38,6 +38,7 @@ metadata {
 		command "setMaxCoolTemp", ["number"]
 		command "setMaxUpdateInterval", ["number"]
 
+		//** Do these all need to be attributes, some should be stateVariables or just Data?
 		attribute "thermostatThreshold", "number"
 		attribute "minHeatTemp", "number"
 		attribute "maxHeatTemp", "number"
@@ -50,10 +51,50 @@ metadata {
 	}
 }
 
+/*
+***** FOR REFERENCE UNTIL WE CLEAN UP THIS MESS *****
+Thermostat
+Device Selector : capability.thermostat
+Driver Definition : capability "Thermostat"
+
+Attributes :
+  coolingSetpoint - NUMBER
+  heatingSetpoint - NUMBER
+  schedule - JSON_OBJECT
+  supportedThermostatFanModes - ENUM ["on", "circulate", "auto"]
+  supportedThermostatModes - ENUM ["auto", "off", "heat", "emergency heat", "cool"]
+  temperature - NUMBER
+  thermostatFanMode - ENUM ["on", "circulate", "auto"]
+  thermostatMode - ENUM ["auto", "off", "heat", "emergency heat", "cool"]
+  thermostatOperatingState - ENUM ["heating", "pending cool", "pending heat", "vent economizer", "idle", "cooling", "fan only"]
+  thermostatSetpoint - NUMBER
+
+Commands
+  auto()
+  cool()
+  emergencyHeat()
+  fanAuto()
+  fanCirculate()
+  fanOn()
+  heat()
+  off()
+  setCoolingSetpoint(temperature)
+    temperature required (NUMBER) - Cooling setpoint in degrees
+  setHeatingSetpoint(temperature)
+    temperature required (NUMBER) - Heating setpoint in degrees
+  setSchedule(JSON_OBJECT)
+    JSON_OBJECT (JSON_OBJECT) - JSON_OBJECT
+  setThermostatFanMode(fanmode)
+    fanmode required (ENUM) - Fan mode to set
+  setThermostatMode(thermostatmode)
+    thermostatmode required (ENUM) - Thermostat mode to set
+*/
+
 def installed() {
 	
-	// We need to transform everything to the base Unit C
-	// Then add variable according to hub settings
+	//** We need to transform everything to the base Unit C
+	//** Then add variable according to hub settings
+	//** Send events only if needed
 	
 	sendEvent(name: "minCoolTemp", value: 60, unit: "F") // 15.5°C
 	sendEvent(name: "maxCoolTemp", value: 95, unit: "F") // 35°C
@@ -71,6 +112,8 @@ def installed() {
 }
 
 def updated() {
+	
+	//** Send events only if needed
 	sendEvent(name: "minCoolTemp", value: 60, unit: "F") // 15.5°C
 	sendEvent(name: "maxCoolTemp", value: 95, unit: "F") // 35°C
 	sendEvent(name: "maxHeatTemp", value: 80, unit: "F") // 26.5°C
@@ -80,7 +123,7 @@ def updated() {
 }
 
 def parse(String description) {
-	//Nothing to parse here
+	// Nothing to parse here since this is a virtual device
 }
 
 
@@ -126,12 +169,14 @@ def evaluateMode() {
 
 	if (! (mode in ["emergency stop", "off"]) && now - lastUpdate >= maxInterval ) {
 		logger("info", "maxUpdateInterval exceeded. Setting emergencyStop mode")
+		//** Send events only if needed
 		sendEvent(name: "preEmergencyMode", value: mode)
 		sendEvent(name: "thermostatMode", value: "emergency stop")
 		runIn(2, 'evaluateMode')
 		return
 	} else if (mode == "emergency stop" && now - lastUpdate < maxInterval && device.currentValue("preEmergencyMode")) {
 		logger("info", "Autorecovered from emergencyStop. Resetting to previous mode.")
+		//** Send events only if needed
 		sendEvent(name: "thermostatMode", value: device.currentValue("preEmergencyMode"))
 		sendEvent(name: "preEmergencyMode", value: "")
 		runIn(2, 'evaluateMode')
