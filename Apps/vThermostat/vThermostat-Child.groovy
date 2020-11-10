@@ -58,8 +58,17 @@ preferences {
 
 def installed() {
     
-	int loggingLevel = (settings.logLevel) ? settings.logLevel.toInteger() : 3
+	// Set log level as soon as it's installed to start logging what we do ASAP
+	int loggingLevel
+	if (settings.logLevel) {
+		loggingLevel = settings.logLevel.toInteger()
+	} else {
+		loggingLevel = 3
+	}
+	
 	logger("trace", "Installed Running vThermostat: $app.label")
+	
+	// Generate a random DeviceID
 	state.deviceID = "vt" + Math.abs(new Random().nextInt() % 9999) + 1
 
 	//Create the child device
@@ -111,8 +120,14 @@ def initialize(thermostatInstance) {
 	unsubscribe()
 	unschedule()
 
-	//Set Logging level and Drop to level 3 if level is higher in set number of seconds
-	loggingLevel = (settings.logLevel) ? settings.logLevel.toInteger() : 3
+	// Recheck Log level in case it was changed in the child app
+	if (settings.logLevel) {
+		loggingLevel = settings.logLevel.toInteger()
+	} else {
+		loggingLevel = 3
+	}
+	
+	// Log level was set to a higher level than 3, drop level to 3 in x number of minutes
 	if (loggingLevel >= 3) {
 		logger("trace", "Initialize runIn $settings.logDropLevelTime")
 		runIn(settings.logDropLevelTime.toInteger() * 60, logsDropLevel)
@@ -247,9 +262,14 @@ def updateTemperature() {
 def thermostatStateHandler(evt) {
 	
 	// Thermostat device changed the state (heating / cooling or other), go change state of outlets accordingly
-	if (evt.value) {		
-        logger("warn", "Thermostat state changed to ${opState}")
-        setOutletsState(opState)
+	// *******************
+	// THIS DOES NOT SEEM TO WORK, SOMETHING iS MISSING HERE, WHERE DOES opState GET DEFINED
+	// OR JUST FETCH THE VALUE DIRECTLY FROM DEVICE, WE NEED TO TEST THIS A BIT
+	// *******************
+	// def opState = evt.value
+	if (evt.value) {
+		logger("info", "Thermostat state changed to ${opState}")
+		setOutletsState(opState)
 	} else {
 		logger("warn", "thermostatStateHandler got an empty event")
 	}
@@ -272,6 +292,8 @@ def thermostatStateHandler(evt) {
 //************************************************************
 def setOutletsState(opState) {
 	def thermostat = getThermostat()
+	
+	// Did we get a value when called, if not, let's go fetch it directly from the device 
 	opState = opState ? opState : thermostat.currentValue("thermostatOperatingState")
 
 	if (opState == "heating") {
@@ -352,8 +374,11 @@ def logger(level, msg) {
 //
 //************************************************************
 def logsDropLevel() {
+	def thermostat=getThermostat()
+	
 	app.updateSetting("logLevel",[type:"enum", value:"3"])
-	getThermostat().setLogLevel(3)
+	thermostat.setLogLevel(3)
+	
 	loggingLevel = app.getSetting('logLevel').toInteger()
 	logger("warn","App logging level set to $loggingLevel")
 }
