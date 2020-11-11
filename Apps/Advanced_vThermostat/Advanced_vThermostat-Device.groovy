@@ -92,32 +92,56 @@ Commands
 
 def installed() {
 	
-	//** We need to transform everything to the base Unit C
-	//** Then add variable according to hub settings
-	//** Send events only if needed
+	// Let's just set a few things before starting
+	def hubScale = getTemperatureScale()
 	
-	sendEvent(name: "minCoolTemp", value: 60, unit: "F") // 15.5°C
-	sendEvent(name: "maxCoolTemp", value: 95, unit: "F") // 35°C
-	sendEvent(name: "maxHeatTemp", value: 80, unit: "F") // 26.5°C
-	sendEvent(name: "minHeatTemp", value: 35, unit: "F") // 1.5°C
-	sendEvent(name: "thermostatThreshold", value: 1.0, unit: "F") // Set by user
-	sendEvent(name: "temperature", value: 72, unit: "F") // 22°C
-	sendEvent(name: "heatingSetpoint", value: 70, unit: "F") // 21°C
-	sendEvent(name: "thermostatSetpoint", value: 70, unit: "F") // 21°C
-	sendEvent(name: "coolingSetpoint", value: 76, unit: "F") // 24.5°C
+	// Let's set all base thermostat settings
+	if (hubScale = "C") {
+		sendEvent(name: "minCoolTemp", value: 15.5, unit: "C") // 60°F
+		sendEvent(name: "maxCoolTemp", value: 35.0, unit: "C") // 95°F
+		sendEvent(name: "maxHeatTemp", value: 26.5, unit: "C") // 80°F
+		sendEvent(name: "minHeatTemp", value: 1.5, unit: "C") // 35°F
+		sendEvent(name: "thermostatThreshold", value: 0.5, unit: "C") // Set by user
+		sendEvent(name: "temperature", value: 22.0, unit: "C") // 72°F
+		sendEvent(name: "heatingSetpoint", value: 21.0, unit: "C") // 70°F
+		sendEvent(name: "thermostatSetpoint", value: 21.0, unit: "C") // 70°F
+		sendEvent(name: "coolingSetpoint", value: 24.5, unit: "C") // 76°F
+	} else {
+		sendEvent(name: "minCoolTemp", value: 60, unit: "F") // 15.5°C
+		sendEvent(name: "maxCoolTemp", value: 95, unit: "F") // 35°C
+		sendEvent(name: "maxHeatTemp", value: 80, unit: "F") // 26.5°C
+		sendEvent(name: "minHeatTemp", value: 35, unit: "F") // 1.5°C
+		sendEvent(name: "thermostatThreshold", value: 1.0, unit: "F") // Set by user
+		sendEvent(name: "temperature", value: 72, unit: "F") // 22°C
+		sendEvent(name: "heatingSetpoint", value: 70, unit: "F") // 21°C
+		sendEvent(name: "thermostatSetpoint", value: 70, unit: "F") // 21°C
+		sendEvent(name: "coolingSetpoint", value: 76, unit: "F") // 24.5°C
+	}
 	sendEvent(name: "thermostatMode", value: "off")
 	sendEvent(name: "thermostatOperatingState", value: "idle")
 	sendEvent(name: "maxUpdateInterval", value: 65)
 	sendEvent(name: "lastTempUpdate", value: new Date() )
+
 }
 
 def updated() {
+	//** Send events only if needed ?
+
+	// Let's just set a few things before starting
+	def hubScale = getTemperatureScale()
 	
-	//** Send events only if needed
-	sendEvent(name: "minCoolTemp", value: 60, unit: "F") // 15.5°C
-	sendEvent(name: "maxCoolTemp", value: 95, unit: "F") // 35°C
-	sendEvent(name: "maxHeatTemp", value: 80, unit: "F") // 26.5°C
-	sendEvent(name: "minHeatTemp", value: 35, unit: "F") // 1.5°C
+	// Let's set all base thermostat settings
+	if (hubScale = "C") {
+		sendEvent(name: "minCoolTemp", value: 15.5, unit: "F") // 60°F
+		sendEvent(name: "maxCoolTemp", value: 35, unit: "F") // 95°F
+		sendEvent(name: "maxHeatTemp", value: 26.5, unit: "F") // 80°F
+		sendEvent(name: "minHeatTemp", value: 1.5, unit: "F") // 35°F
+	} else {
+		sendEvent(name: "minCoolTemp", value: 60, unit: "F") // 15.5°C
+		sendEvent(name: "maxCoolTemp", value: 95, unit: "F") // 35°C
+		sendEvent(name: "maxHeatTemp", value: 80, unit: "F") // 26.5°C
+		sendEvent(name: "minHeatTemp", value: 35, unit: "F") // 1.5°C
+	}
 	sendEvent(name: "maxUpdateInterval", value: 65)
 	sendEvent(name: "lastTempUpdate", value: new Date() )
 }
@@ -771,7 +795,8 @@ def setLogLevel(level) {
 //     Temperature scale
 //************************************************************
 def getTemperatureScale() {
-	return "${location.temperatureScale}"
+	//return "${location.temperatureScale}"
+	return "F" //Temporary until we have all parts of it working in F
 }
 
 
