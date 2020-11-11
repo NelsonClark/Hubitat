@@ -36,6 +36,10 @@ preferences {
 
 def pageConfig() {
 	dynamicPage(name: "", title: "", install: true, uninstall: true, refreshInterval:0) {
+		section() {
+			label title: "Name of new Advanced vThermostat app/device:", required: true
+		}
+		
 		section("Select temperature sensor(s)... (Average value will be used if you select multiple sensors)"){
 			input "sensors", "capability.temperatureMeasurement", title: "Sensor", multiple: true, required: true
 		}
