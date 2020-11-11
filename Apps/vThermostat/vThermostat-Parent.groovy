@@ -39,13 +39,19 @@ preferences {
 }
 
 def installed() {
+	log.debug "Installed"
 	initialize()
 }
 
 def updated() {
+	log.debug "Updated"
 	unsubscribe()
 	initialize()
 }
 
 def initialize() {
+	log.debug "Initializing; there are ${childApps.size()} child apps installed"
+	childApps.each {child -> 
+		log.debug "  child app: ${child.label}"
+	}
 }
