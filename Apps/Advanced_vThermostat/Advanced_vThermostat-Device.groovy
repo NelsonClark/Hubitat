@@ -20,7 +20,7 @@ metadata {
 	definition (name: "Advanced vThermostat Device", 
 		namespace: "nclark", 
 		author: "Nelson Clark",
-		importUrl: "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/vThermostat/vThermostat-Device.groovy") {
+		importUrl: "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/Advanced_vThermostat/Advanced_vThermostat-Device.groovy") {
 		
 		capability "Thermostat"
 		capability "Sensor"
