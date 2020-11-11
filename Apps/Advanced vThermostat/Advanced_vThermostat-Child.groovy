@@ -24,7 +24,7 @@ definition(
 	category: "Green Living",
 	iconUrl: "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/vThermostat/vThermostat-logo-small.png",
 	iconX2Url: "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/vThermostat/vThermostat-logo.png",
-	importUrl: "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/vThermostat/vThermostat-Child.groovy",
+	importUrl: "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/Advanced%20vThermostat/Advanced_vThermostat-Child.groovy",
 	parent: "nclark:vThermostat Manager"
 )
 
