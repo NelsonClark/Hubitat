@@ -30,28 +30,36 @@ definition(
 
 
 preferences {
-	section("Select temperature sensor(s)... (Average value will be used if you select multiple sensors)"){
-		input "sensors", "capability.temperatureMeasurement", title: "Sensor", multiple: true, required: true
-	}
+	page(name: "pageConfig") // Doing it this way elimiates the default app name/mode options.
+}
 
-	section("Select outlet(s) to use for heating... "){
-		input "heatOutlets", "capability.switch", title: "Outlets", multiple: true
-	}
 
-	section("Select outlet(s) to use for cooling... "){
-		input "coolOutlets", "capability.switch", title: "Outlets", multiple: true
-	}
+def pageConfig() {
+	dynamicPage(name: "", title: "", install: true, uninstall: true, refreshInterval:0) {
+		section("Select temperature sensor(s)... (Average value will be used if you select multiple sensors)"){
+			input "sensors", "capability.temperatureMeasurement", title: "Sensor", multiple: true, required: true
+		}
 
-	section("Initial Thermostat Settings..."){
-		input "heatingSetPoint", "decimal", title: "Heating Setpoint", required: true, defaultValue: 68.0
-		input "coolingSetPoint", "decimal", title: "Cooling Setpoint", required: true, defaultValue: 76.0
-		input (name:"thermostatMode", type:"enum", title:"Thermostat Mode", options: ["auto","heat","cool","off"], defaultValue:"auto", required: true)
-		input "thermostatThreshold", "decimal", "title": "Temperature Threshold", required: true, defaultValue: 1.0
-	}
+		section("Select outlet(s) to use for heating... "){
+			input "heatOutlets", "capability.switch", title: "Outlets", multiple: true
+		}
+
+		section("Select outlet(s) to use for cooling... "){
+			input "coolOutlets", "capability.switch", title: "Outlets", multiple: true
+		}
+
+		section("Initial Thermostat Settings..."){
+			input "heatingSetPoint", "decimal", title: "Heating Setpoint in F", required: true, defaultValue: 68.0
+			input "coolingSetPoint", "decimal", title: "Cooling Setpoint in F", required: true, defaultValue: 76.0
+			input (name:"thermostatMode", type:"enum", title:"Thermostat Mode", options: ["auto","heat","cool","off"], defaultValue:"auto", required: true)
+			input "thermostatThreshold", "decimal", "title": "Temperature Threshold in degrees", required: true, defaultValue: 1.0
+		}
 	
-	section("Log Settings...") {
-		input (name: "logLevel", type: "enum", title: "Live Logging Level: Messages with this level and higher will be logged", options: [[0: 'Disabled'], [1: 'Error'], [2: 'Warning'], [3: 'Info'], [4: 'Debug'], [5: 'Trace']], defaultValue: 3)
-		input "logDropLevelTime", "decimal", title: "Drop down to Info Level Minutes", required: true, defaultValue: 5
+		section("Log Settings...") {
+			input (name: "logLevel", type: "enum", title: "Live Logging Level: Messages with this level and higher will be logged", options: [[0: 'Disabled'], [1: 'Error'], [2: 'Warning'], [3: 'Info'], [4: 'Debug'], [5: 'Trace']], defaultValue: 3)
+			input "logDropLevelTime", "decimal", title: "Drop down to Info Level Minutes", required: true, defaultValue: 5
+		}
+
 	}
 }
 
@@ -93,8 +101,8 @@ def updated() {
 
 
 def uninstalled() {
-	deleteChildDevice(state.deviceID)
 	logger("info", "Child Device " + state.deviceID + " removed")
+	deleteChildDevice(state.deviceID)
 }
 
 
@@ -128,7 +136,7 @@ def initialize(thermostatInstance) {
 	}
 	
 	// Log level was set to a higher level than 3, drop level to 3 in x number of minutes
-	if (loggingLevel >= 3) {
+	if (loggingLevel > 3) {
 		logger("trace", "Initialize runIn $settings.logDropLevelTime")
 		runIn(settings.logDropLevelTime.toInteger() * 60, logsDropLevel)
 	}
