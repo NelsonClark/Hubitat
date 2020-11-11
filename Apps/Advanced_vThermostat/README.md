@@ -12,10 +12,10 @@ This device handler allows the creation of a new Device thats shows as a thermos
 # Installation
 
 * Import the Parent and Child apps (in that order) in the <> Apps Code section of your Hubitat Hub
-* Import the Device driver in the <> Drivers Code section of your Hubitat Hub.
-* Go to the Apps Section and use the + Add User App button in the top right corner to add the vThermostat Manager
-* In the vThermostat Manager, create a new vThermostat and select your devices.
-* When done, a child app is created so you can change the devices used at any time, and a new device is created where you can set it up like any other thermostat.
+* Import the Device driver in the <> Drivers Code section of your Hubitat Hub
+* Go to the Apps Section and use the + Add User App button in the top right corner to add the vThermostat Manager, then click DONE
+* Go back in the Advanced vThermostat Manager, create a new vThermostat and select your devices and settings, then click DONE
+* A child app is created so you can change the devices used at any time for that vThermostat, a new device is also created where you can set it up like any other thermostat
 
 Enjoy!
 
