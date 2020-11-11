@@ -27,14 +27,19 @@ Enjoy!
   * Code clean up
   * Description change for Hubitat Environement
   * Start commenting what is going on
+* 0.3 - Bug fixes
+  * Code clean up
+  * Logging level set by user with auto drop to info level
+  * Comments everywhere and added trace logging to help debug
+  * Added device command handlers for the ones not yet used
 
 # ToDo
 
 Things to do in upcomming releases...
 
-- [ ] Log level preferences (TRACE / DEBUG / INFO / WARN / ERROR / NONE)
+- [x] Log level preferences (TRACE / DEBUG / INFO / WARN / ERROR / NONE)
 - [ ] Use hub units to determine C° or F°
-- [ ] Simplify the settings in the device driver by hiding less common settings
+- [ ] Simplify the settings in the device driver by hiding less common settings if possible and change some attributs with state variables
 - [ ] Only send Events when an actual change was done to take less resources on the hub and keep event chatter down 
 - [ ] Auto-learning for rooms that heat or cool faster to limit overshoot and undershoot
 
