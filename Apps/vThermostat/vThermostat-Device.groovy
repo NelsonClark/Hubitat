@@ -598,6 +598,81 @@ def setMaxHeatTemp(Double value) {
 
 
 //************************************************************
+// fanAuto
+//     Set fan in auto mode
+// Signature(s)
+//     fanAuto()
+// Parameters
+//     None
+// Returns
+//     None
+//************************************************************
+def fanAuto() {
+	// Nothing to do for now!!!	
+}
+
+
+//************************************************************
+// fanCirculate
+//     Set fan in circulate mode
+// Signature(s)
+//     fanCirculate()
+// Parameters
+//     None
+// Returns
+//     None
+//************************************************************
+def fanCirculate() {
+	// Nothing to do for now!!!
+}
+
+
+//************************************************************
+// fanOn
+//     Set fan on mode
+// Signature(s)
+//     fanOn()
+// Parameters
+//     None
+// Returns
+//     None
+//************************************************************
+def fanOn() {
+	// Nothing to do for now!!!
+}
+
+
+//************************************************************
+// setSchedule
+//     Set Schedule
+// Signature(s)
+//     setSchedule()
+// Parameters
+//     None
+// Returns
+//     None
+//************************************************************
+def setSchedule() {
+	// Nothing to do for now!!!
+}
+
+
+//************************************************************
+// setThermostatFanMode
+//     Set fan mode
+// Signature(s)
+//     setThermostatFanMode()
+// Parameters
+//     None
+// Returns
+//     None
+//************************************************************
+def setThermostatFanMode() {
+	// Nothing to do for now!!!
+}
+
+
+//************************************************************
 // logger
 //     Wrapper function for all logging with level control via preferences
 // Signature(s)
