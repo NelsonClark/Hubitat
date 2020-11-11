@@ -37,7 +37,19 @@ preferences {
 def pageConfig() {
 	// Let's just set a few things before starting
 	//displayUnits = getDisplayUnits() // Not yet used for now
-	displayUnits = "°F"
+	def displayUnits = "°F"
+	
+	def hubScale = getTemperatureScale()
+	
+	if (hubScale = "C") {
+		def heatingSetPoint = 21.0
+		def coolingSetPoint = 24.5
+		def thermostatThreshold = 0.5
+	} else {
+		def heatingSetPoint = 70.0
+		def coolingSetPoint = 76.0
+		def thermostatThreshold = 1.0
+	}
 	
 	dynamicPage(name: "", title: "", install: true, uninstall: true, refreshInterval:0) {
 		section() {
@@ -57,10 +69,10 @@ def pageConfig() {
 		}
 
 		section("Initial Thermostat Settings..."){
-			input "heatingSetPoint", "decimal", title: "Heating Setpoint in $displayUnits", required: true, defaultValue: 68.0
-			input "coolingSetPoint", "decimal", title: "Cooling Setpoint in $displayUnits", required: true, defaultValue: 76.0
+			input "heatingSetPoint", "decimal", title: "Heating Setpoint in $displayUnits", required: true, defaultValue: heatingSetPoint
+			input "coolingSetPoint", "decimal", title: "Cooling Setpoint in $displayUnits", required: true, defaultValue: coolingSetPoint
 			input (name:"thermostatMode", type:"enum", title:"Thermostat Mode", options: ["auto","heat","cool","off"], defaultValue:"auto", required: true)
-			input "thermostatThreshold", "decimal", "title": "Temperature Threshold in degrees", required: true, defaultValue: 1.0
+			input "thermostatThreshold", "decimal", "title": "Temperature Threshold in $displayUnits", required: true, defaultValue: thermostatThreshold
 		}
 	
 		section("Log Settings...") {
