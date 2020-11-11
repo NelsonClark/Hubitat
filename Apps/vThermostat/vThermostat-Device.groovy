@@ -234,13 +234,13 @@ def setHeatingSetpoint(value){
 }
 
 def setHeatingSetpoint(Double value) {
+	logger("debug", "setHeatingSetpoint($value)")
 	def min = device.currentValue("minHeatTemp")
 	def max = device.currentValue("maxHeatTemp")
 	if (value > max || value < min) {
 		logger("debug", "setHeatingSetpoint is ignoring out of range request ($value).")
 		return
 	}
-	logger("debug", "setHeatingSetpoint($value)")
 	sendEvent(name: "heatingSetpoint", value: value)
 	runIn(2,'evaluateMode')
 }
@@ -262,13 +262,13 @@ def setCoolingSetpoint(value){
 }
 
 def setCoolingSetpoint(Double value) {
+	logger("debug", "setCoolingSetpoint($value)")
 	def min = device.currentValue("minCoolTemp")
 	def max = device.currentValue("maxCoolTemp")
 	if (value > max || value < min) {
 		logger("debug", "setCoolingSetpoint is ignoring out of range request ($value).")
 		return
 	}
-	logger("debug", "setCoolingSetpoint($value)")
 	sendEvent(name: "coolingSetpoint", value: value)
 	runIn(2,'evaluateMode')
 }
@@ -308,6 +308,7 @@ def setThermostatThreshold(Double value) {
 //     None
 //************************************************************
 def setMaxUpdateInterval(BigDecimal minutes) {
+	logger("trace", "setMaxUpdateInterval($minutes)")
 	sendEvent(name: "maxUpdateInterval", value: minutes)
 	runIn(2,'evaluateMode')
 }
@@ -324,6 +325,7 @@ def setMaxUpdateInterval(BigDecimal minutes) {
 //     None
 //************************************************************
 def setThermostatMode(String value) {
+	logger("trace", "setThermostatMode($value)")
 	sendEvent(name: "thermostatMode", value: value)
 	runIn(2,'evaluateMode')
 }
@@ -340,6 +342,7 @@ def setThermostatMode(String value) {
 //     None
 //************************************************************
 def off() {
+	logger("trace", "off()")
 	sendEvent(name: "thermostatMode", value: "off")
 	runIn(2,'evaluateMode')
 }
@@ -356,6 +359,7 @@ def off() {
 //     None
 //************************************************************
 def emergencyStop() {
+	logger("trace", "emergencyStop()")
 	sendEvent(name: "thermostatMode", value: "emergency stop")
 	runIn(2,'evaluateMode')
 }
@@ -372,6 +376,7 @@ def emergencyStop() {
 //     None
 //************************************************************
 def heat() {
+	logger("trace", "heat()")
 	sendEvent(name: "thermostatMode", value: "heat")
 	runIn(2,'evaluateMode')
 }
@@ -388,6 +393,7 @@ def heat() {
 //     None
 //************************************************************
 def auto() {
+	logger("trace", "auto()")
 	sendEvent(name: "thermostatMode", value: "auto")
 	runIn(2,'evaluateMode')
 }
@@ -404,6 +410,7 @@ def auto() {
 //     None
 //************************************************************
 def emergencyHeat() {
+	logger("trace", "emergencyHeat()")
 	sendEvent(name: "thermostatMode", value: "emergency heat")
 	runIn(2,'evaluateMode')
 }
@@ -420,6 +427,7 @@ def emergencyHeat() {
 //     None
 //************************************************************
 def cool() {
+	logger("trace", "cool()")
 	sendEvent(name: "thermostatMode", value: "cool")
 	runIn(2,'evaluateMode')
 }
@@ -436,6 +444,7 @@ def cool() {
 //     None
 //************************************************************
 def poll() {
+	logger("trace", "poll()")
 	null
 }
 
@@ -451,6 +460,7 @@ def poll() {
 //     None
 //************************************************************
 def setTemperature(value) {
+	logger("trace", "setTemperature($value)")
 	sendEvent(name:"temperature", value: value)
 	sendEvent(name: "lastTempUpdate", value: new Date() )
 	runIn(2,'evaluateMode')
@@ -468,6 +478,7 @@ def setTemperature(value) {
 //     None
 //************************************************************
 def heatUp() {
+	logger("trace", "heatUp()")
 	def ts = device.currentValue("heatingSetpoint")
 	setHeatingSetpoint( ts + 1 )
 }
@@ -484,6 +495,7 @@ def heatUp() {
 //     None
 //************************************************************
 def heatDown() {
+	logger("trace", "heatDown()")
 	def ts = device.currentValue("heatingSetpoint")
 	setHeatingSetpoint( ts - 1 )
 }
@@ -500,6 +512,7 @@ def heatDown() {
 //     None
 //************************************************************
 def coolUp() {
+	logger("trace", "coolUp()")
 	def ts = device.currentValue("heatingSetpoint")
 	setCoolingSetpoint( ts + 1 )
 }
@@ -516,6 +529,7 @@ def coolUp() {
 //     None
 //************************************************************
 def coolDown() {
+	logger("trace", "coolDown()")
 	def ts = device.currentValue("heatingSetpoint")
 	setCoolingSetpoint( ts - 1 )
 }
@@ -532,6 +546,7 @@ def coolDown() {
 //     None
 //************************************************************
 def setMinCoolTemp(Double value) {
+	logger("trace", "setMinCoolTemp($value)")
 	def t = device.currentValue("coolingSetpoint")
 	sendEvent(name: "minCoolTemp", value: value)
 	if (t < value) {
@@ -551,6 +566,7 @@ def setMinCoolTemp(Double value) {
 //     None
 //************************************************************
 def setMaxCoolTemp(Double value) {
+	logger("trace", "setMaxCoolTemp($value)")
 	def t = device.currentValue("coolingSetpoint")
 	sendEvent(name: "maxCoolTemp", value: value)
 	if (t > value) {
@@ -570,6 +586,7 @@ def setMaxCoolTemp(Double value) {
 //     None
 //************************************************************
 def setMinHeatTemp(Double value) {
+	logger("trace", "setMinHeatTemp($value)")
 	def t = device.currentValue("heatingSetpoint")
 	sendEvent(name: "minHeatTemp", value: value)
 	if (t < value) {
@@ -589,6 +606,7 @@ def setMinHeatTemp(Double value) {
 //     None
 //************************************************************
 def setMaxHeatTemp(Double value) {
+	logger("trace", "setMaxHeatTemp($value)")
 	def t = device.currentValue("heatingSetpoint")
 	sendEvent(name: "maxHeatTemp", value: value)
 	if (t > value) {
@@ -608,6 +626,7 @@ def setMaxHeatTemp(Double value) {
 //     None
 //************************************************************
 def fanAuto() {
+	logger("trace", "fanAuto()")
 	// Nothing to do for now!!!	
 }
 
@@ -623,6 +642,7 @@ def fanAuto() {
 //     None
 //************************************************************
 def fanCirculate() {
+	logger("trace", "fanCirculate()")
 	// Nothing to do for now!!!
 }
 
@@ -638,6 +658,7 @@ def fanCirculate() {
 //     None
 //************************************************************
 def fanOn() {
+	logger("trace", "fanOn()")
 	// Nothing to do for now!!!
 }
 
@@ -653,6 +674,7 @@ def fanOn() {
 //     None
 //************************************************************
 def setSchedule() {
+	logger("trace", "setSchedule()")
 	// Nothing to do for now!!!
 }
 
@@ -668,6 +690,7 @@ def setSchedule() {
 //     None
 //************************************************************
 def setThermostatFanMode() {
+	logger("trace", "setThermostatFanMode()")
 	// Nothing to do for now!!!
 }
 
