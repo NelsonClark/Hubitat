@@ -168,7 +168,7 @@ def evaluateMode() {
 	logger("debug", "now=$now, lastUpdate=$lastUpdate, maxInterval=$maxInterval, heatingSetpoint=$heatingSetpoint, coolingSetpoint=$coolingSetpoint, temp=$temp")
 
 	if (! (mode in ["emergency stop", "off"]) && now - lastUpdate >= maxInterval ) {
-		logger("info", "maxUpdateInterval exceeded. Setting emergencyStop mode")
+		logger("warn", "maxUpdateInterval exceeded. Setting emergencyStop mode")
 		//** Send events only if needed
 		sendEvent(name: "preEmergencyMode", value: mode)
 		sendEvent(name: "thermostatMode", value: "emergency stop")
@@ -189,7 +189,7 @@ def evaluateMode() {
 	// Do we have a treshhold set, if not we do nothing 
 	// ** This has been changed from original code so that if no treshold is set, the thermostat will stay in idle state
 	if ( !threshold ) {
-		logger("debug", "Threshold was not set. Not doing anything...")
+		logger("warn", "Threshold was not set. Not doing anything...")
 	} else {
 		if (mode in ["heat","emergency heat"]) {
 			// Mode is set to heat, let's see if we need to heat or not
@@ -234,7 +234,7 @@ def setHeatingSetpoint(value){
 }
 
 def setHeatingSetpoint(Double value) {
-	logger("debug", "setHeatingSetpoint($value)")
+	logger("trace", "setHeatingSetpoint($value)")
 	def min = device.currentValue("minHeatTemp")
 	def max = device.currentValue("maxHeatTemp")
 	if (value > max || value < min) {
@@ -262,7 +262,7 @@ def setCoolingSetpoint(value){
 }
 
 def setCoolingSetpoint(Double value) {
-	logger("debug", "setCoolingSetpoint($value)")
+	logger("trace", "setCoolingSetpoint($value)")
 	def min = device.currentValue("minCoolTemp")
 	def max = device.currentValue("maxCoolTemp")
 	if (value > max || value < min) {
@@ -290,7 +290,7 @@ def setThermostatThreshold(value) {
 }
 
 def setThermostatThreshold(Double value) {
-	logger("debug", "setThermostatThreshold($value)")
+	logger("trace", "setThermostatThreshold($value)")
 	sendEvent(name: "thermostatThreshold", value: value)
 	runIn(2,'evaluateMode')
 }
