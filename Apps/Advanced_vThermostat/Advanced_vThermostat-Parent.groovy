@@ -33,7 +33,7 @@ preferences {
 		section("Devices") {
 		}
 		section {
-			app(name: "thermostats", appName: "Advanced vThermostat Child", namespace: "nclark", title: "Add vThermostat", multiple: true)
+			app(name: "thermostats", appName: "Advanced vThermostat Child", namespace: "nclark", title: "Add Advanced vThermostat", multiple: true)
 		}
 	}
 }
