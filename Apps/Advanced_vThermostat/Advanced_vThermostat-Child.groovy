@@ -1,5 +1,5 @@
 /*
- *  vThermostat Child App
+ *  Advance vThermostat Child App
  *  Project URL: https://github.com/NelsonClark/Hubitat/tree/main/Apps/vThermostat
  *  Copyright 2020 Nelson Clark
  *
@@ -22,9 +22,9 @@ definition(
 	author: "Nelson Clark",
 	description: "Join any sensor(s) with any outlet(s) for virtual thermostat control.",
 	category: "Green Living",
-	iconUrl: "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/vThermostat/vThermostat-logo-small.png",
-	iconX2Url: "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/vThermostat/vThermostat-logo.png",
-	importUrl: "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/Advanced%20vThermostat/Advanced_vThermostat-Child.groovy",
+	iconUrl: "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/Advanced_vThermostat/Advanced_vThermostat-logo-small.png",
+	iconX2Url: "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/Advanced_vThermostat/Advanced_vThermostat-logo.png",
+	importUrl: "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/Advanced_vThermostat/Advanced_vThermostat-Child.groovy",
 	parent: "nclark:vThermostat Manager"
 )
 
