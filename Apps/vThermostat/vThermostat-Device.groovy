@@ -238,10 +238,12 @@ def setHeatingSetpoint(Double value) {
 	def min = device.currentValue("minHeatTemp")
 	def max = device.currentValue("maxHeatTemp")
 	if (value > max || value < min) {
-		logger("debug", "setHeatingSetpoint is ignoring out of range request ($value).")
+		logger("warn", "setHeatingSetpoint() is ignoring out of range request ($value).")
 		return
+	} else {
+		logger("trace", "setHeatingSetpoint() setting temperature as asked")
+		sendEvent(name: "heatingSetpoint", value: value)
 	}
-	sendEvent(name: "heatingSetpoint", value: value)
 	runIn(2,'evaluateMode')
 }
 
@@ -266,10 +268,12 @@ def setCoolingSetpoint(Double value) {
 	def min = device.currentValue("minCoolTemp")
 	def max = device.currentValue("maxCoolTemp")
 	if (value > max || value < min) {
-		logger("debug", "setCoolingSetpoint is ignoring out of range request ($value).")
+		logger("warn", "setCoolingSetpoint() is ignoring out of range request ($value).")
 		return
+	} else {
+		logger("trace", "setCoolingSetpoint() setting temperature as asked")
+		sendEvent(name: "coolingSetpoint", value: value)
 	}
-	sendEvent(name: "coolingSetpoint", value: value)
 	runIn(2,'evaluateMode')
 }
 
@@ -480,6 +484,7 @@ def setTemperature(value) {
 def heatUp() {
 	logger("trace", "heatUp()")
 	def ts = device.currentValue("heatingSetpoint")
+	logger("trace", "heatUp current value: $ts")
 	setHeatingSetpoint( ts + 1 )
 }
 
@@ -497,6 +502,7 @@ def heatUp() {
 def heatDown() {
 	logger("trace", "heatDown()")
 	def ts = device.currentValue("heatingSetpoint")
+	logger("trace", "heatDown current value: $ts")
 	setHeatingSetpoint( ts - 1 )
 }
 
@@ -514,6 +520,7 @@ def heatDown() {
 def coolUp() {
 	logger("trace", "coolUp()")
 	def ts = device.currentValue("heatingSetpoint")
+	logger("trace", "coolUp current value: $ts")
 	setCoolingSetpoint( ts + 1 )
 }
 
@@ -531,6 +538,7 @@ def coolUp() {
 def coolDown() {
 	logger("trace", "coolDown()")
 	def ts = device.currentValue("heatingSetpoint")
+	logger("trace", "coolDown current value: $ts")
 	setCoolingSetpoint( ts - 1 )
 }
 
