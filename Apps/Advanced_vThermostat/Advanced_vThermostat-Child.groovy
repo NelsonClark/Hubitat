@@ -17,7 +17,7 @@
  */
 
 definition(
-	name: "vThermostat Child",
+	name: "Advanced vThermostat Child",
 	namespace: "nclark",
 	author: "Nelson Clark",
 	description: "Join any sensor(s) with any outlet(s) for virtual thermostat control.",
@@ -85,7 +85,7 @@ def installed() {
 	logger("trace", "Installed Running vThermostat: $app.label")
 	
 	// Generate a random DeviceID
-	state.deviceID = "vt" + Math.abs(new Random().nextInt() % 9999) + 1
+	state.deviceID = "avt" + Math.abs(new Random().nextInt() % 9999) + 1
 
 	//Create the child device
 	def thermostat
