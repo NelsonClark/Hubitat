@@ -36,9 +36,7 @@ preferences {
 
 def pageConfig() {
 	// Let's just set a few things before starting
-	//displayUnits = getDisplayUnits() // Not yet used for now
-	def displayUnits = "°F"
-	
+	def displayUnits = getDisplayUnits()
 	def hubScale = getTemperatureScale()
 	
 	if (hubScale = "C") {
@@ -51,6 +49,7 @@ def pageConfig() {
 		def thermostatThreshold = 1.0
 	}
 	
+	// Display all options for a new instince of the Advanced vThermostat
 	dynamicPage(name: "", title: "", install: true, uninstall: true, refreshInterval:0) {
 		section() {
 			label title: "Name of new Advanced vThermostat app/device:", required: true
@@ -423,7 +422,8 @@ def logsDropLevel() {
 //     Temperature scale
 //************************************************************
 def getTemperatureScale() {
-	return "${location.temperatureScale}"
+	//return "${location.temperatureScale}"
+	return "F" //Temporary until we have all parts of it working in F
 }
 
 
@@ -445,22 +445,3 @@ def getDisplayUnits() {
 	}
 }
 
-
-//************************************************************
-// convertToHubTempScale
-//     Convert to hubs temperature scale
-// Signature(s)
-//     convertToHubTempScale(Double value)
-// Parameters
-//     value : 
-// Returns
-//     Converted value
-//************************************************************
-def convertToHubTempScale(Double value) {
-
-	if (getTemperatureScale() == "C") {
-		return value
-	} else {
-		return Math.round(celsiusToFahrenheit(value))
-	}
-}
