@@ -35,6 +35,10 @@ preferences {
 
 
 def pageConfig() {
+	// Let's just set a few things before starting
+	//displayUnits = getDisplayUnits() // Not yet used for now
+	displayUnits = "°F"
+	
 	dynamicPage(name: "", title: "", install: true, uninstall: true, refreshInterval:0) {
 		section() {
 			label title: "Name of new Advanced vThermostat app/device:", required: true
@@ -53,8 +57,8 @@ def pageConfig() {
 		}
 
 		section("Initial Thermostat Settings..."){
-			input "heatingSetPoint", "decimal", title: "Heating Setpoint in F", required: true, defaultValue: 68.0
-			input "coolingSetPoint", "decimal", title: "Cooling Setpoint in F", required: true, defaultValue: 76.0
+			input "heatingSetPoint", "decimal", title: "Heating Setpoint in $displayUnits", required: true, defaultValue: 68.0
+			input "coolingSetPoint", "decimal", title: "Cooling Setpoint in $displayUnits", required: true, defaultValue: 76.0
 			input (name:"thermostatMode", type:"enum", title:"Thermostat Mode", options: ["auto","heat","cool","off"], defaultValue:"auto", required: true)
 			input "thermostatThreshold", "decimal", "title": "Temperature Threshold in degrees", required: true, defaultValue: 1.0
 		}
@@ -393,4 +397,58 @@ def logsDropLevel() {
 	
 	loggingLevel = app.getSetting('logLevel').toInteger()
 	logger("warn","App logging level set to $loggingLevel")
+}
+
+
+//************************************************************
+// getTemperatureScale
+//     Get the hubs temperature scale setting and return the result
+// Signature(s)
+//     getTemperatureScale()
+// Parameters
+//     None
+// Returns
+//     Temperature scale
+//************************************************************
+def getTemperatureScale() {
+	return "${location.temperatureScale}"
+}
+
+
+//************************************************************
+// getDisplayUnits
+//     Get the diplay units
+// Signature(s)
+//     getDisplayUnits()
+// Parameters
+//     None
+// Returns
+//     Formated Units String
+//************************************************************
+def getDisplayUnits() {
+	if (getTemperatureScale() == "C") {
+		return "°C"
+	} else {
+		return "°F"
+	}
+}
+
+
+//************************************************************
+// convertToHubTempScale
+//     Convert to hubs temperature scale
+// Signature(s)
+//     convertToHubTempScale(Double value)
+// Parameters
+//     value : 
+// Returns
+//     Converted value
+//************************************************************
+def convertToHubTempScale(Double value) {
+
+	if (getTemperatureScale() == "C") {
+		return value
+	} else {
+		return Math.round(celsiusToFahrenheit(value))
+	}
 }
