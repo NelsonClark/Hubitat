@@ -519,7 +519,7 @@ def heatDown() {
 //************************************************************
 def coolUp() {
 	logger("trace", "coolUp()")
-	def ts = device.currentValue("heatingSetpoint")
+	def ts = device.currentValue("coolingSetpoint")
 	logger("trace", "coolUp current value: $ts")
 	setCoolingSetpoint( ts + 1 )
 }
@@ -537,7 +537,7 @@ def coolUp() {
 //************************************************************
 def coolDown() {
 	logger("trace", "coolDown()")
-	def ts = device.currentValue("heatingSetpoint")
+	def ts = device.currentValue("coolingSetpoint")
 	logger("trace", "coolDown current value: $ts")
 	setCoolingSetpoint( ts - 1 )
 }
