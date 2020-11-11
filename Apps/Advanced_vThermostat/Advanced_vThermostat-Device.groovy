@@ -1,6 +1,6 @@
 /*
  *  Advanced Virtual Thermostat Device Driver
- *  Project URL: https://github.com/NelsonClark/Hubitat/tree/main/Apps/vThermostat
+ *  Project URL: https://github.com/NelsonClark/Hubitat/tree/main/Apps/Advanced_vThermostat
  *  Copyright 2020 Nelson Clark
  *
  *  This driver is not meant to be used by itself, please go to the project page for more information.
