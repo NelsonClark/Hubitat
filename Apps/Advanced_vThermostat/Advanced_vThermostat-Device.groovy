@@ -17,7 +17,7 @@
  */
 
 metadata {
-	definition (name: "vThermostat Device", 
+	definition (name: "Advanced vThermostat Device", 
 		namespace: "nclark", 
 		author: "Nelson Clark",
 		importUrl: "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/vThermostat/vThermostat-Device.groovy") {
