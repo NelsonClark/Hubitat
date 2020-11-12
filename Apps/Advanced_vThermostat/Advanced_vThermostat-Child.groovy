@@ -39,6 +39,14 @@ def pageConfig() {
 	def displayUnits = getDisplayUnits()
 	def hubScale = getTemperatureScale()
 	
+	// Set distance in degrees between heating and cooling setpoint based on unit
+	if (getTemperatureScale() == "C") { 
+		def setpointDistance = 3
+	} else {
+		def setpointDistance = 5
+	}
+
+	
 	if (hubScale == "C") {
 		def heatingSetPoint = 21.0
 		def coolingSetPoint = 24.5
@@ -49,7 +57,7 @@ def pageConfig() {
 		def thermostatThreshold = 1.0
 	}
 	
-	// Display all options for a new instince of the Advanced vThermostat
+	// Display all options for a new instance of the Advanced vThermostat
 	dynamicPage(name: "", title: "", install: true, uninstall: true, refreshInterval:0) {
 		section() {
 			label title: "Name of new Advanced vThermostat app/device:", required: true
@@ -67,9 +75,9 @@ def pageConfig() {
 			input "coolOutlets", "capability.switch", title: "Outlets", multiple: true
 		}
 
-		section("Initial Thermostat Settings..."){
-			input "heatingSetPoint", "decimal", title: "Heating Setpoint in $displayUnits", required: true, defaultValue: heatingSetPoint
-			input "coolingSetPoint", "decimal", title: "Cooling Setpoint in $displayUnits", required: true, defaultValue: coolingSetPoint
+		section("Initial Thermostat Settings... (invalid values will be set to the closest valid value)"){
+			input "heatingSetPoint", "decimal", title: "Heating Setpoint in $displayUnits, this should be at least $setpointDistance $displayUnits lower than cooling", required: true, defaultValue: heatingSetPoint
+			input "coolingSetPoint", "decimal", title: "Cooling Setpoint in $displayUnits, this should be at least $setpointDistance $displayUnits higher than heating", required: true, defaultValue: coolingSetPoint
 			input (name:"thermostatMode", type:"enum", title:"Thermostat Mode", options: ["auto","heat","cool","off"], defaultValue:"auto", required: true)
 			input "thermostatThreshold", "decimal", "title": "Temperature Threshold in $displayUnits", required: true, defaultValue: thermostatThreshold
 		}
@@ -120,7 +128,7 @@ def updated() {
 
 
 def uninstalled() {
-	logger("info", "Child Device " + state.deviceID + " removed")
+	logger("info", "Child Device " + state.deviceID + " removed") // This never shows in the logs, is it because of the way HE deals with the uninstalled method?
 	deleteChildDevice(state.deviceID)
 }
 
