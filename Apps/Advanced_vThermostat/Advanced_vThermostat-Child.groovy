@@ -39,22 +39,16 @@ def pageConfig() {
 	def displayUnits = getDisplayUnits()
 	def hubScale = getTemperatureScale()
 	
-	// Set distance in degrees between heating and cooling setpoint based on unit
-	if (getTemperatureScale() == "C") { 
-		def setpointDistance = 3
-	} else {
-		def setpointDistance = 5
-	}
-
-	
 	if (hubScale == "C") {
-		def heatingSetPoint = 21.0
-		def coolingSetPoint = 24.5
-		def thermostatThreshold = 0.5
+		setpointDistance = 3.0
+		heatingSetPoint = 21.0
+		coolingSetPoint = 24.5
+		thermostatThreshold = 0.5
 	} else {
-		def heatingSetPoint = 70.0
-		def coolingSetPoint = 76.0
-		def thermostatThreshold = 1.0
+		setpointDistance = 5.0
+		heatingSetPoint = 70.0
+		coolingSetPoint = 76.0
+		thermostatThreshold = 1.0
 	}
 	
 	// Display all options for a new instance of the Advanced vThermostat
