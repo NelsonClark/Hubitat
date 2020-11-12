@@ -31,7 +31,7 @@ metadata {
 		command "coolUp"
 		command "coolDown"
 		//command "setTemperature", ["number"] // why give the ability to set temp directly???
-		//command "setThermostatThreshold", ["number"] // Thos should only be set from the manager
+		//command "setThermostatThreshold", ["number"] // This should only be set from the manager
 		//command "setMinHeatTemp", ["number"]
 		//command "setMaxHeatTemp", ["number"]
 		//command "setMinCoolTemp", ["number"]
@@ -353,8 +353,9 @@ def setCoolingSetpoint(Double value) {
 	logger("trace", "setCoolingSetpoint($value)")
 
 	//** Round to resolution of thermostat unit
-	def newCoolingSetpoint = roundDegrees(value)
-
+	newCoolingSetpoint = roundDegrees(value)
+	logger("trace", "setCoolingSetpoint() - newCoolingSetpoint rounded: $newCoolingSetpoint")
+	
 	//** check if we are actually changing something before going thru all the loops
 	if (newCoolingSetpoint == device.currentValue("coolingSetpoint")) {
 		logger("warn", "Cooling setpoint same as already set, nothing to do")
@@ -367,17 +368,17 @@ def setCoolingSetpoint(Double value) {
 			def setpointDistance = 5
 		}
 
-		def coolmin = device.currentValue("minCoolTemp")
-		def coolmax = device.currentValue("maxCoolTemp")
-		def heatmin = device.currentValue("minHeatTemp")
-		def heatmax = device.currentValue("maxHeatTemp")
-		def heatingSetpoint = device.currentValue("heatingSetpoint")
+		coolmin = device.currentValue("minCoolTemp")
+		coolmax = device.currentValue("maxCoolTemp")
+		heatmin = device.currentValue("minHeatTemp")
+		heatmax = device.currentValue("maxHeatTemp")
+		heatingSetpoint = device.currentValue("heatingSetpoint")
 	
 		//** check if heating setpoint is at least x degrees apart from new cooling setpoint
 		if ((newCoolingSetpoint - setpointDistance) < heatingSetpoint) {
 			// To close, let's adjust accordingly
 			logger("info", "Cooling setpoint to close to heating setpoint, adjusting heating accordingly")
-			def newHeatingSetpoint = newCoolingSetpoint - setpointDistance
+			newHeatingSetpoint = newCoolingSetpoint - setpointDistance
 		}
 		
 		
@@ -973,9 +974,9 @@ def getDisplayUnits() {
 //************************************************************
 def getThermostatResolution() {
 	if (getTemperatureScale() == "C") {
-		return .5
+		return 0.5
 	} else {
-		return 1
+		return 1.0
 	}
 }
 
