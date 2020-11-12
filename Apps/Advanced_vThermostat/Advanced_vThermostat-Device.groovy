@@ -96,7 +96,7 @@ def installed() {
 	def hubScale = getTemperatureScale()
 	
 	// Let's set all base thermostat settings
-	if (hubScale = "C") {
+	if (hubScale == "C") {
 		sendEvent(name: "minCoolTemp", value: 15.5, unit: "C") // 60°F
 		sendEvent(name: "maxCoolTemp", value: 35.0, unit: "C") // 95°F
 		sendEvent(name: "maxHeatTemp", value: 26.5, unit: "C") // 80°F
@@ -131,7 +131,7 @@ def updated() {
 	def hubScale = getTemperatureScale()
 	
 	// Let's set all base thermostat settings
-	if (hubScale = "C") {
+	if (hubScale == "C") {
 		sendEvent(name: "minCoolTemp", value: 15.5, unit: "F") // 60°F
 		sendEvent(name: "maxCoolTemp", value: 35, unit: "F") // 95°F
 		sendEvent(name: "maxHeatTemp", value: 26.5, unit: "F") // 80°F
