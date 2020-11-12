@@ -375,6 +375,7 @@ def setCoolingSetpoint(Double value) {
 		heatingSetpoint = device.currentValue("heatingSetpoint")
 	
 		//** check if heating setpoint is at least x degrees apart from new cooling setpoint
+		logger("trace","setCoolingSetpoint() - $newCoolingSetpoint, $setpointDistance, $heatingSetpoint")
 		if ((newCoolingSetpoint - setpointDistance) < heatingSetpoint) {
 			// To close, let's adjust accordingly
 			logger("info", "Cooling setpoint to close to heating setpoint, adjusting heating accordingly")
