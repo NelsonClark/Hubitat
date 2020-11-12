@@ -39,7 +39,7 @@ def pageConfig() {
 	def displayUnits = getDisplayUnits()
 	def hubScale = getTemperatureScale()
 	
-	if (hubScale = "C") {
+	if (hubScale == "C") {
 		def heatingSetPoint = 21.0
 		def coolingSetPoint = 24.5
 		def thermostatThreshold = 0.5
