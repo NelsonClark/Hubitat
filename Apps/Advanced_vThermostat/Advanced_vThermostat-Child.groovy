@@ -117,6 +117,16 @@ def installed() {
 
 
 def updated() {
+	// Set log level to new value
+	int loggingLevel
+	if (settings.logLevel) {
+		loggingLevel = settings.logLevel.toInteger()
+	} else {
+		loggingLevel = 3
+	}
+	
+	logger("trace", "Installed Running vThermostat: $app.label")
+
 	initialize(getThermostat())
 }
 
