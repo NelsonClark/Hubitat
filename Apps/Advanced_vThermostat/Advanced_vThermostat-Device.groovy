@@ -30,15 +30,8 @@ metadata {
 		command "heatDown"
 		command "coolUp"
 		command "coolDown"
-		//command "setTemperature", ["number"] // why give the ability to set temp directly???
-		//command "setThermostatThreshold", ["number"] // This should only be set from the manager
-		//command "setMinHeatTemp", ["number"]
-		//command "setMaxHeatTemp", ["number"]
-		//command "setMinCoolTemp", ["number"]
-		//command "setMaxCoolTemp", ["number"]
-		//command "setMaxUpdateInterval", ["number"]
+		command "setMaxUpdateInterval", ["number"]
 
-		//** Do these all need to be attributes, some should be stateVariables or just Data?
 		attribute "thermostatThreshold", "number"
 		attribute "minHeatTemp", "number"
 		attribute "maxHeatTemp", "number"
@@ -102,7 +95,7 @@ def updated() {
 	// Hub scale has changed, let's convert everything to new scale
 	if (state.currentUnit != hubScale) {
 		logger("trace", "updated() - Update values for new hub scale")
-		//** WHY ARE WE RESETTING TO BASE VALUES ON AN UPDATE ???????? MAKES NO SENSE AT ALL
+		//** WHY ARE WE RESETTING TO BASE VALUES ON AN UPDATE ???????? MAKES NO SENSE AT ALL THIS WILL NEED TO CHANGE
 		if (hubScale == "C") {
 			state.currentUnit = "C"
 			sendEvent(name: "minCoolTemp", value: 15.5, unit: "C") // 60°F
@@ -177,12 +170,10 @@ def evaluateMode() {
 	// If fetched maxInternal from user is higher than 180, set to 180
 	if (maxInterval > 180) maxinterval = 180
 	
-	logger("debug", "now=$now.format("HH:mm:ss"), lastUpdate=$lastUpdate.format("HH:mm:ss"), maxInterval=$maxInterval minutes, heatingSetpoint=$heatingSetpoint, coolingSetpoint=$coolingSetpoint, temp=$temp")
+	logger("debug", "now=${now}, lastUpdate=${lastUpdate}, maxInterval=$maxInterval minutes, heatingSetpoint=$heatingSetpoint, coolingSetpoint=$coolingSetpoint, temp=$temp")
 
 	//convert maxUpdateInterval (in minutes) to milliseconds
 	maxInterval = maxInterval * 60000
-
-	logger("debug", "now=$now.format("HH:mm:ss"), lastUpdate=$lastUpdate.format("HH:mm:ss"), maxInterval=$maxInterval milisecondes, heatingSetpoint=$heatingSetpoint, coolingSetpoint=$coolingSetpoint, temp=$temp")
 
 	if (! (mode in ["emergency stop", "off"]) && now - lastUpdate >= maxInterval ) {
 		logger("error", "Temp sensor maximum update time interval exceeded. Setting EMERGENCY STOP mode until temp sensor starts reporting again")
