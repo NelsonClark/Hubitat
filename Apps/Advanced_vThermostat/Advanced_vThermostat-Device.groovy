@@ -293,9 +293,9 @@ def setHeatingSetpoint(Double value) {
 		
 		// Set distance in degrees between heating and cooling setpoint based on unit
 		if (getTemperatureScale() == "C") { 
-			def setpointDistance = 3
+			setpointDistance = 3
 		} else {
-			def setpointDistance = 5
+			setpointDistance = 5
 		}
 
 		def coolmin = device.currentValue("minCoolTemp")
@@ -308,7 +308,7 @@ def setHeatingSetpoint(Double value) {
 		if (newHeatingSetpoint > (coolingSetpoint - setpointDistance)) {
 			// To close, let's adjust accordingly
 			logger("info", "Heating setpoint to close to cooling setpoint, adjusting cooling accordingly")
-			def newCoolingSetpoint = newHeatingSetpoint - setpointDistance
+			newCoolingSetpoint = newHeatingSetpoint - setpointDistance
 		}
 		
 		
@@ -363,9 +363,9 @@ def setCoolingSetpoint(Double value) {
 		
 		// Set distance in degrees between heating and cooling setpoint based on unit
 		if (getTemperatureScale() == "C") { 
-			def setpointDistance = 3
+			setpointDistance = 3
 		} else {
-			def setpointDistance = 5
+			setpointDistance = 5
 		}
 
 		coolmin = device.currentValue("minCoolTemp")
