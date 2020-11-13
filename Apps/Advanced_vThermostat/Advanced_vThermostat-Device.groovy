@@ -51,44 +51,6 @@ metadata {
 	}
 }
 
-/*
-***** FOR REFERENCE UNTIL WE CLEAN UP THIS MESS *****
-Thermostat
-Device Selector : capability.thermostat
-Driver Definition : capability "Thermostat"
-
-Attributes :
-  coolingSetpoint - NUMBER
-  heatingSetpoint - NUMBER
-  schedule - JSON_OBJECT
-  supportedThermostatFanModes - ENUM ["on", "circulate", "auto"]
-  supportedThermostatModes - ENUM ["auto", "off", "heat", "emergency heat", "cool"]
-  temperature - NUMBER
-  thermostatFanMode - ENUM ["on", "circulate", "auto"]
-  thermostatMode - ENUM ["auto", "off", "heat", "emergency heat", "cool"]
-  thermostatOperatingState - ENUM ["heating", "pending cool", "pending heat", "vent economizer", "idle", "cooling", "fan only"]
-  thermostatSetpoint - NUMBER
-
-Commands
-  auto()
-  cool()
-  emergencyHeat()
-  fanAuto()
-  fanCirculate()
-  fanOn()
-  heat()
-  off()
-  setCoolingSetpoint(temperature)
-    temperature required (NUMBER) - Cooling setpoint in degrees
-  setHeatingSetpoint(temperature)
-    temperature required (NUMBER) - Heating setpoint in degrees
-  setSchedule(JSON_OBJECT)
-    JSON_OBJECT (JSON_OBJECT) - JSON_OBJECT
-  setThermostatFanMode(fanmode)
-    fanmode required (ENUM) - Fan mode to set
-  setThermostatMode(thermostatmode)
-    thermostatmode required (ENUM) - Thermostat mode to set
-*/
 
 //************************************************************
 //************************************************************
@@ -137,22 +99,26 @@ def updated() {
 	// Let's just set a few things before starting
 	def hubScale = getTemperatureScale()
 	
-	//** WHY ARE WE RESETTING TO BASE VALUES ON AN UPDATE ???????? MAKES NO SENSE AT ALL
-	//** WE ONLY NEED TO CONVERT THESE VALUES IF THE UNITS HAVE CHANGED, IF NOT DO NOTHING 
-	// 
-	if (hubScale == "C") {
-		sendEvent(name: "minCoolTemp", value: 15.5, unit: "F") // 60°F
-		sendEvent(name: "maxCoolTemp", value: 35, unit: "F") // 95°F
-		sendEvent(name: "maxHeatTemp", value: 26.5, unit: "F") // 80°F
-		sendEvent(name: "minHeatTemp", value: 1.5, unit: "F") // 35°F
-	} else {
-		sendEvent(name: "minCoolTemp", value: 60, unit: "F") // 15.5°C
-		sendEvent(name: "maxCoolTemp", value: 95, unit: "F") // 35°C
-		sendEvent(name: "maxHeatTemp", value: 80, unit: "F") // 26.5°C
-		sendEvent(name: "minHeatTemp", value: 35, unit: "F") // 1.5°C
+	// Hub scale has changed, let's convert everything to new scale
+	if (state.currentUnit != hubScale) {
+	
+		//** WHY ARE WE RESETTING TO BASE VALUES ON AN UPDATE ???????? MAKES NO SENSE AT ALL
+		if (hubScale == "C") {
+			state.currentUnit = "C"
+			sendEvent(name: "minCoolTemp", value: 15.5, unit: "C") // 60°F
+			sendEvent(name: "maxCoolTemp", value: 35, unit: "C") // 95°F
+			sendEvent(name: "maxHeatTemp", value: 26.5, unit: "C") // 80°F
+			sendEvent(name: "minHeatTemp", value: 1.5, unit: "C") // 35°F
+		} else {
+			state.currentUnit = "F"
+			sendEvent(name: "minCoolTemp", value: 60, unit: "F") // 15.5°C
+			sendEvent(name: "maxCoolTemp", value: 95, unit: "F") // 35°C
+			sendEvent(name: "maxHeatTemp", value: 80, unit: "F") // 26.5°C
+			sendEvent(name: "minHeatTemp", value: 35, unit: "F") // 1.5°C
+		}
+		sendEvent(name: "maxUpdateInterval", value: 65)
+		sendEvent(name: "lastTempUpdate", value: new Date() )
 	}
-	sendEvent(name: "maxUpdateInterval", value: 65)
-	sendEvent(name: "lastTempUpdate", value: new Date() )
 }
 
 
@@ -298,23 +264,23 @@ def setHeatingSetpoint(Double value) {
 			setpointDistance = 5
 		}
 
-		def coolmin = device.currentValue("minCoolTemp")
-		def coolmax = device.currentValue("maxCoolTemp")
-		def heatmin = device.currentValue("minHeatTemp")
-		def heatmax = device.currentValue("maxHeatTemp")
-		def coolingSetpoint = device.currentValue("coolingSetpoint")
+		coolmin = device.currentValue("minCoolTemp")
+		coolmax = device.currentValue("maxCoolTemp")
+		heatmin = device.currentValue("minHeatTemp")
+		heatmax = device.currentValue("maxHeatTemp")
+		coolingSetpoint = device.currentValue("coolingSetpoint")
 	
 		//** check if cooling setpoint is at least x degrees apart from new heating setpoint
 		if (newHeatingSetpoint > (coolingSetpoint - setpointDistance)) {
 			// To close, let's adjust accordingly
 			logger("info", "Heating setpoint to close to cooling setpoint, adjusting cooling accordingly")
-			newCoolingSetpoint = newHeatingSetpoint - setpointDistance
+			newCoolingSetpoint = newHeatingSetpoint + setpointDistance
 		}
 		
 		
 		if (newHeatingSetpoint > heatmax || newHeatingSetpoint < heatmin) {
 			// Out of range
-			logger("warn", "setHeatingSetpoint() is ignoring out of range heatinging setpoint ($newHeatingSetpoint).")
+			logger("warn", "setHeatingSetpoint() is ignoring out of range heating setpoint ($newHeatingSetpoint).")
 		} else if (newCoolingSetpoint && (newCoolingSetpoint > coolmax || newCoolingSetpoint < coolmin)) {
 			// Out of range because of cooling
 			logger("warn", "setHeatingSetpoint() is ignoring out of range cooling setpoint ($newCoolingSetpoint).")
@@ -485,7 +451,7 @@ def setThermostatMode(String value) {
 //     None
 //************************************************************
 def off() {
-	if (value != device.currentValue("thermostatMode")) {
+	if (device.currentValue("thermostatMode") != "off") {
 		logger("trace", "off() - sendEvent")
 		sendEvent(name: "thermostatMode", value: "off")
 		runIn(2,'evaluateMode')
@@ -506,7 +472,7 @@ def off() {
 //     None
 //************************************************************
 def emergencyStop() {
-	if (value != device.currentValue("thermostatMode")) {
+	if (device.currentValue("thermostatMode") != "emergency stop") {
 		logger("trace", "emergencyStop() - sendEvent")
 		sendEvent(name: "thermostatMode", value: "emergency stop")
 		runIn(2,'evaluateMode')
@@ -527,7 +493,7 @@ def emergencyStop() {
 //     None
 //************************************************************
 def heat() {
-	if (value != device.currentValue("thermostatMode")) {
+	if (device.currentValue("thermostatMode") != "heat") {
 		logger("trace", "heat() - sendEvent")
 		sendEvent(name: "thermostatMode", value: "heat")
 		runIn(2,'evaluateMode')
@@ -548,7 +514,7 @@ def heat() {
 //     None
 //************************************************************
 def auto() {
-	if (value != device.currentValue("thermostatMode")) {
+	if (device.currentValue("thermostatMode") != "auto") {
 		logger("trace", "auto() - sendEvent")
 		sendEvent(name: "thermostatMode", value: "auto")
 		runIn(2,'evaluateMode')
@@ -569,7 +535,7 @@ def auto() {
 //     None
 //************************************************************
 def emergencyHeat() {
-	if (value != device.currentValue("thermostatMode")) {
+	if (device.currentValue("thermostatMode") != "emergency heat") {
 		logger("trace", "emergencyHeat() - sendEvent")
 		sendEvent(name: "thermostatMode", value: "emergency heat")
 		runIn(2,'evaluateMode')
@@ -590,7 +556,7 @@ def emergencyHeat() {
 //     None
 //************************************************************
 def cool() {
-	if (value != device.currentValue("thermostatMode")) {
+	if (device.currentValue("thermostatMode") != "cool") {
 		logger("trace", "cool() - sendEvent")
 		sendEvent(name: "thermostatMode", value: "cool")
 		runIn(2,'evaluateMode')
@@ -865,7 +831,7 @@ def setSchedule() {
 // Returns
 //     None
 //************************************************************
-def setThermostatFanMode() {
+def setThermostatFanMode(String value) {
 	logger("trace", "setThermostatFanMode() - Nothing to do")
 	// Nothing to do for now!!!
 }
@@ -939,8 +905,8 @@ def setLogLevel(level) {
 //     Temperature scale
 //************************************************************
 def getTemperatureScale() {
-	//return "${location.temperatureScale}"
-	return "F" //Temporary until we have all parts of it working in F
+	return "${location.temperatureScale}"
+	//return "F" //Temporary until we have all parts of it working in F
 }
 
 
