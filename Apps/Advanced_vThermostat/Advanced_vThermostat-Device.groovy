@@ -965,9 +965,10 @@ def getThermostatResolution() {
 def convertToHubTempScale(Double value) {
 
 	if (getTemperatureScale() == "C") {
-		return value
+		return roundDegrees((value - 32) * 5 / 9)
+		
 	} else {
-		return Math.round(celsiusToFahrenheit(value))
+		return roundDegrees((value * 9 / 5) + 32)
 	}
 }
 
@@ -982,7 +983,7 @@ def convertToHubTempScale(Double value) {
 // Returns
 //     Rounded value
 //************************************************************
-def roundDegrees(value) {
+def roundDegrees(Double value) {
 	
 	if (getTemperatureScale() == "C") { 
 		value = value * 2
