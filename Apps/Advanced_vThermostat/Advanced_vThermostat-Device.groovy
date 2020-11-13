@@ -986,7 +986,7 @@ def roundDegrees(value) {
 	
 	if (getTemperatureScale() == "C") { 
 		value = value * 2
-		value = Math.round(value / 2)
+		value = Math.round(value) / 2
 	} else {
 		value = Math.round(value)	
 	}
