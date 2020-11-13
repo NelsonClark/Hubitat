@@ -97,7 +97,9 @@ def updated() {
 		logger("trace", "updated() - Update values for new hub scale")
 		//** WHY ARE WE RESETTING TO BASE VALUES ON AN UPDATE ???????? MAKES NO SENSE AT ALL THIS WILL NEED TO CHANGE
 		if (hubScale == "C") {
-			state.currentUnit = "C"
+			//newValue = convertToHubTempScale(device.currentValue("minCoolTemp"))
+			//sendEvent(name: "minCoolTemp", value: convertToHubTempScale(device.currentValue("minCoolTemp")), unit: "C") // 60°F
+			
 			sendEvent(name: "minCoolTemp", value: 15.5, unit: "C") // 60°F
 			sendEvent(name: "maxCoolTemp", value: 35, unit: "C") // 95°F
 			sendEvent(name: "minHeatTemp", value: 1.5, unit: "C") // 35°F
@@ -106,8 +108,8 @@ def updated() {
 			sendEvent(name: "heatingSetpoint", value: 21.0, unit: "C") // 70°F
 			sendEvent(name: "coolingSetpoint", value: 24.5, unit: "C") // 76°F
 			sendEvent(name: "thermostatSetpoint", value: 21.0, unit: "C") // 70°F
+			state.currentUnit = "C"
 		} else {
-			state.currentUnit = "F"
 			sendEvent(name: "minCoolTemp", value: 60, unit: "F") // 15.5°C
 			sendEvent(name: "maxCoolTemp", value: 95, unit: "F") // 35°C
 			sendEvent(name: "minHeatTemp", value: 35, unit: "F") // 1.5°C
@@ -116,6 +118,7 @@ def updated() {
 			sendEvent(name: "heatingSetpoint", value: 70, unit: "F") // 21°C
 			sendEvent(name: "coolingSetpoint", value: 76, unit: "F") // 24.5°C
 			sendEvent(name: "thermostatSetpoint", value: 70, unit: "F") // 21°C
+			state.currentUnit = "F"
 		}
 		sendEvent(name: "maxUpdateInterval", value: 65)
 		sendEvent(name: "lastTempUpdate", value: new Date() )
