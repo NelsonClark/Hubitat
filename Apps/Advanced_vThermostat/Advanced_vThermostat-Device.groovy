@@ -101,23 +101,33 @@ def updated() {
 	
 	// Hub scale has changed, let's convert everything to new scale
 	if (state.currentUnit != hubScale) {
-	
+		logger("trace", "updated() - Update values for new hub scale")
 		//** WHY ARE WE RESETTING TO BASE VALUES ON AN UPDATE ???????? MAKES NO SENSE AT ALL
 		if (hubScale == "C") {
 			state.currentUnit = "C"
 			sendEvent(name: "minCoolTemp", value: 15.5, unit: "C") // 60°F
 			sendEvent(name: "maxCoolTemp", value: 35, unit: "C") // 95°F
-			sendEvent(name: "maxHeatTemp", value: 26.5, unit: "C") // 80°F
 			sendEvent(name: "minHeatTemp", value: 1.5, unit: "C") // 35°F
+			sendEvent(name: "maxHeatTemp", value: 26.5, unit: "C") // 80°F
+			sendEvent(name: "thermostatThreshold", value: 0.5, unit: "C") // Set by user
+			sendEvent(name: "heatingSetpoint", value: 21.0, unit: "C") // 70°F
+			sendEvent(name: "coolingSetpoint", value: 24.5, unit: "C") // 76°F
+			sendEvent(name: "thermostatSetpoint", value: 21.0, unit: "C") // 70°F
 		} else {
 			state.currentUnit = "F"
 			sendEvent(name: "minCoolTemp", value: 60, unit: "F") // 15.5°C
 			sendEvent(name: "maxCoolTemp", value: 95, unit: "F") // 35°C
-			sendEvent(name: "maxHeatTemp", value: 80, unit: "F") // 26.5°C
 			sendEvent(name: "minHeatTemp", value: 35, unit: "F") // 1.5°C
+			sendEvent(name: "maxHeatTemp", value: 80, unit: "F") // 26.5°C
+			sendEvent(name: "thermostatThreshold", value: 1.0, unit: "F") // Set by user
+			sendEvent(name: "heatingSetpoint", value: 70, unit: "F") // 21°C
+			sendEvent(name: "coolingSetpoint", value: 76, unit: "F") // 24.5°C
+			sendEvent(name: "thermostatSetpoint", value: 70, unit: "F") // 21°C
 		}
 		sendEvent(name: "maxUpdateInterval", value: 65)
 		sendEvent(name: "lastTempUpdate", value: new Date() )
+	} else {
+		logger("trace", "updated() - Nothing to do")
 	}
 }
 
@@ -166,19 +176,22 @@ def evaluateMode() {
 	def maxInterval = device.currentValue("maxUpdateInterval") ?: 180
 	// If fetched maxInternal from user is higher than 180, set to 180
 	if (maxInterval > 180) maxinterval = 180
-	//convert maxUpdateInterval (in minutes) to milliseconds
-	maxInterval = maxInterval * 1000 * 60
+	
+	logger("debug", "now=$now.format("HH:mm:ss"), lastUpdate=$lastUpdate.format("HH:mm:ss"), maxInterval=$maxInterval minutes, heatingSetpoint=$heatingSetpoint, coolingSetpoint=$coolingSetpoint, temp=$temp")
 
-	logger("debug", "now=$now, lastUpdate=$lastUpdate, maxInterval=$maxInterval, heatingSetpoint=$heatingSetpoint, coolingSetpoint=$coolingSetpoint, temp=$temp")
+	//convert maxUpdateInterval (in minutes) to milliseconds
+	maxInterval = maxInterval * 60000
+
+	logger("debug", "now=$now.format("HH:mm:ss"), lastUpdate=$lastUpdate.format("HH:mm:ss"), maxInterval=$maxInterval milisecondes, heatingSetpoint=$heatingSetpoint, coolingSetpoint=$coolingSetpoint, temp=$temp")
 
 	if (! (mode in ["emergency stop", "off"]) && now - lastUpdate >= maxInterval ) {
-		logger("error", "evaluateMode() - maxUpdateInterval exceeded. Setting EMERGENCY STOP mode")
+		logger("error", "Temp sensor maximum update time interval exceeded. Setting EMERGENCY STOP mode until temp sensor starts reporting again")
 		sendEvent(name: "preEmergencyMode", value: mode)
 		sendEvent(name: "thermostatMode", value: "emergency stop")
 		runIn(2, 'evaluateMode')
 		return
 	} else if (mode == "emergency stop" && now - lastUpdate < maxInterval && device.currentValue("preEmergencyMode")) {
-		logger("warn", "evaluateMode() - Autorecovered from emergencyStop. Resetting to previous mode.")
+		logger("warn", "Temp sensor started reporting again, Autorecovered from emergencyStop. Setting to previous mode.")
 		sendEvent(name: "thermostatMode", value: device.currentValue("preEmergencyMode"))
 		sendEvent(name: "preEmergencyMode", value: "")
 		//** We recovered, should we just keep going going trhu the paces and set to correct mode right now ???
