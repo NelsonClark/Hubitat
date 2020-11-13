@@ -424,8 +424,8 @@ def logsDropLevel() {
 //     Temperature scale
 //************************************************************
 def getTemperatureScale() {
-	//return "${location.temperatureScale}"
-	return "F" //Temporary until we have all parts of it working in F
+	return "${location.temperatureScale}"
+	//return "F" //Temporary until we have all parts of it working in F
 }
 
 
