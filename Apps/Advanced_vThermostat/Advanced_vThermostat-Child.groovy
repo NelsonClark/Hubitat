@@ -36,9 +36,22 @@ preferences {
 
 def pageConfig() {
 	// Let's just set a few things before starting
-	//displayUnits = getDisplayUnits() // Not yet used for now
-	displayUnits = "°F"
+	def displayUnits = getDisplayUnits()
+	def hubScale = getTemperatureScale()
 	
+	if (hubScale == "C") {
+		setpointDistance = 3.0
+		heatingSetPoint = 21.0
+		coolingSetPoint = 24.5
+		thermostatThreshold = 0.5
+	} else {
+		setpointDistance = 5.0
+		heatingSetPoint = 70.0
+		coolingSetPoint = 76.0
+		thermostatThreshold = 1.0
+	}
+	
+	// Display all options for a new instance of the Advanced vThermostat
 	dynamicPage(name: "", title: "", install: true, uninstall: true, refreshInterval:0) {
 		section() {
 			label title: "Name of new Advanced vThermostat app/device:", required: true
@@ -56,11 +69,11 @@ def pageConfig() {
 			input "coolOutlets", "capability.switch", title: "Outlets", multiple: true
 		}
 
-		section("Initial Thermostat Settings..."){
-			input "heatingSetPoint", "decimal", title: "Heating Setpoint in $displayUnits", required: true, defaultValue: 68.0
-			input "coolingSetPoint", "decimal", title: "Cooling Setpoint in $displayUnits", required: true, defaultValue: 76.0
+		section("Initial Thermostat Settings... (invalid values will be set to the closest valid value)"){
+			input "heatingSetPoint", "decimal", title: "Heating Setpoint in $displayUnits, this should be at least $setpointDistance $displayUnits lower than cooling", required: true, defaultValue: heatingSetPoint
+			input "coolingSetPoint", "decimal", title: "Cooling Setpoint in $displayUnits, this should be at least $setpointDistance $displayUnits higher than heating", required: true, defaultValue: coolingSetPoint
 			input (name:"thermostatMode", type:"enum", title:"Thermostat Mode", options: ["auto","heat","cool","off"], defaultValue:"auto", required: true)
-			input "thermostatThreshold", "decimal", "title": "Temperature Threshold in degrees", required: true, defaultValue: 1.0
+			input "thermostatThreshold", "decimal", "title": "Temperature Threshold in $displayUnits", required: true, defaultValue: thermostatThreshold
 		}
 	
 		section("Log Settings...") {
@@ -104,12 +117,22 @@ def installed() {
 
 
 def updated() {
+	// Set log level to new value
+	int loggingLevel
+	if (settings.logLevel) {
+		loggingLevel = settings.logLevel.toInteger()
+	} else {
+		loggingLevel = 3
+	}
+	
+	logger("trace", "Installed Running vThermostat: $app.label")
+
 	initialize(getThermostat())
 }
 
 
 def uninstalled() {
-	logger("info", "Child Device " + state.deviceID + " removed")
+	logger("info", "Child Device " + state.deviceID + " removed") // This never shows in the logs, is it because of the way HE deals with the uninstalled method?
 	deleteChildDevice(state.deviceID)
 }
 
@@ -412,6 +435,7 @@ def logsDropLevel() {
 //************************************************************
 def getTemperatureScale() {
 	return "${location.temperatureScale}"
+	//return "F" //Temporary until we have all parts of it working in F
 }
 
 
@@ -433,22 +457,3 @@ def getDisplayUnits() {
 	}
 }
 
-
-//************************************************************
-// convertToHubTempScale
-//     Convert to hubs temperature scale
-// Signature(s)
-//     convertToHubTempScale(Double value)
-// Parameters
-//     value : 
-// Returns
-//     Converted value
-//************************************************************
-def convertToHubTempScale(Double value) {
-
-	if (getTemperatureScale() == "C") {
-		return value
-	} else {
-		return Math.round(celsiusToFahrenheit(value))
-	}
-}

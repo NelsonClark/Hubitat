@@ -23,23 +23,38 @@ Enjoy!
 # Version History
 
 * 0.1 - Original fork from Josh208
-* 0.2 - Minor bug fixes
+* 0.2 - 
+  * Minor bug fixes
   * Code clean up
   * Description change for Hubitat Environement
   * Start commenting what is going on
-* 0.3 - Bug fixes
+* 0.3 - 
+  * Renamed to reflect all the changes and improvements
+  * Bug fixes
   * Code clean up
   * Logging level set by user with auto drop to info level
   * Comments everywhere and added trace logging to help debug
   * Added device command handlers for the ones not yet used
+* 0.4 - 
+  * More code clean up
+  * Bug fixes and typos
+  * Command handler fix for setting fan mode
+  * Added Celcius support based on hub scale
+* 0.5 - 
+  * Added code to keep minimum distance between heating and cooling
+  * Removed some settings in the device driver not needed
+  * Only sends events if the value actually changed to keep events chatter down
+
 
 # ToDo
 
 Things to do in upcomming releases...
 
 - [x] Log level preferences (TRACE / DEBUG / INFO / WARN / ERROR / NONE)
-- [ ] Use hub units to determine C° or F°
-- [ ] Simplify the settings in the device driver by hiding less common settings if possible and change some attributs with state variables
-- [ ] Only send Events when an actual change was done to take less resources on the hub and keep event chatter down 
-- [ ] Auto-learning for rooms that heat or cool faster to limit overshoot and undershoot
+- [x] Use hub units to determine C° or F°
+- [x] Simplify the settings in the device driver by hiding less common settings if possible and change some attributs with state variables
+- [x] Only send Events when an actual change was done to take less resources on the hub and keep event chatter down
+- [ ] Convert values in the device if the hub scale changes, for now it resets to default values
+- [ ] Add support for heating and cooling fan (can be the same for both modes)
+- [ ] Auto-learning for rooms that heat or cool faster to limit overshoot and undershoot (feature request to be considered)
 
