@@ -468,4 +468,3 @@ def getDisplayUnits() {
 		return "°F"
 	}
 }
-
