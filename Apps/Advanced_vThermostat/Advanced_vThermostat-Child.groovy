@@ -72,7 +72,8 @@ def pageConfig() {
 		section("Initial Thermostat Settings... (invalid values will be set to the closest valid value)"){
 			input "heatingSetPoint", "decimal", title: "Heating Setpoint in $displayUnits, this should be at least $setpointDistance $displayUnits lower than cooling", required: true, defaultValue: heatingSetPoint
 			input "coolingSetPoint", "decimal", title: "Cooling Setpoint in $displayUnits, this should be at least $setpointDistance $displayUnits higher than heating", required: true, defaultValue: coolingSetPoint
-			input (name:"thermostatMode", type:"enum", title:"Thermostat Mode", options: ["auto","heat","cool","off"], defaultValue:"auto", required: true)
+			//** Removed because we will take control of this decision depending on the outlets selected for heating and/or cooling
+			//input (name:"thermostatMode", type:"enum", title:"Thermostat Mode", options: ["auto","heat","cool","off"], defaultValue:"auto", required: true)
 			input "thermostatThreshold", "decimal", "title": "Temperature Threshold in $displayUnits", required: true, defaultValue: thermostatThreshold
 		}
 	
@@ -100,7 +101,7 @@ def installed() {
 	// Generate a random DeviceID
 	state.deviceID = "avt" + Math.abs(new Random().nextInt() % 9999) + 1
 
-	//Create the child device
+	//Create vThermostat device
 	def thermostat
 	def label = app.getLabel()
 	logger("info", "Creating vThermostat : ${label} with device id: ${state.deviceID}")
@@ -125,7 +126,7 @@ def updated() {
 		loggingLevel = 3
 	}
 	
-	logger("trace", "Installed Running vThermostat: $app.label")
+	logger("trace", "Updated Running vThermostat: $app.label")
 
 	initialize(getThermostat())
 }
@@ -175,12 +176,23 @@ def initialize(thermostatInstance) {
 	logger("warn", "App logging level set to $loggingLevel")
 	logger("trace", "Initialize LogDropLevelTime: $settings.logDropLevelTime")
 
+	// Let's determine ThermostatMode depending on the choices made in the heating / cooling outlets choices
+	if (heatOutlets && coolOutlets) {
+		thermostatMode = "auto"
+	} else if (heatOutlets) {
+		thermostatMode = "heat"
+	} else if (coolOutlets) {
+		thermostatMode = "cool"
+	} else {
+		thermostatMode = "off"
+	}
+	
 	// Set device settings
 	thermostatInstance.setHeatingSetpoint(heatingSetPoint)
 	thermostatInstance.setCoolingSetpoint(coolingSetPoint)
 	thermostatInstance.setThermostatThreshold(thermostatThreshold)
-	thermostatInstance.setThermostatMode(thermostatMode)
 	thermostatInstance.setLogLevel(loggingLevel)
+	thermostatInstance.setThermostatMode(thermostatMode)
 
 	// Subscribe to the new sensor(s) and device
 	subscribe(sensors, "temperature", temperatureHandler)
