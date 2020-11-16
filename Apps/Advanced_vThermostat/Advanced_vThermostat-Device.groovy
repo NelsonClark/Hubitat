@@ -145,6 +145,15 @@ def parse(String description) {
 //     None
 //************************************************************
 def evaluateMode() {
+	//List<com.hubitat.hub.domain.State> currentStatesList = device.getCurrentStates()
+	//currentStatesList.each {
+		//sendEvent(name: it.name, value: it.value, unit: it.unit, isStateChange: true, descriptionText: "Refresh Command")
+		//logger("warn", "evaluateMode() - TEST States $it.name, $it.value, $it.unit")
+	//}
+	
+
+
+	
 	logger("trace", "evaluateMode() - START")
 	// Run this loop every minute to see how everything is going
 	runIn(60, 'evaluateMode')
@@ -198,29 +207,30 @@ def evaluateMode() {
 	if ( !threshold ) {
 		logger("error", "evaluateMode() - Threshold was not set. Not doing anything...")
 	} else {
+		def units = getTemperatureScale()
 		if (mode in ["heat","emergency heat"]) {
 			// Mode is set to heat, let's see if we need to heat or not
 			if (setPoint != heatingSetpoint) {
-				sendEvent(name: "thermostatSetpoint", value: heatingSetpoint)
+				sendEvent(name: "thermostatSetpoint", value: heatingSetpoint, unit: units)
 			}
 			if ( (heatingSetpoint - temp) >= threshold) callFor = "heating"
 		} else if (mode == "cool") {
 			// Mode is set to cool, let's see if we need to cool or not
 			if (setPoint != coolingSetpoint) {
-				sendEvent(name: "thermostatSetpoint", value: coolingSetpoint)
+				sendEvent(name: "thermostatSetpoint", value: coolingSetpoint, unit: units)
 			}
 			if ( (temp - coolingSetpoint) >= threshold) callFor = "cooling"
 		} else if (mode == "auto") {
 			if (temp > coolingSetpoint) { 
 				// Mode is set to auto, let's see if we need to cool
 				if (setPoint != coolingSetpoint) {
-					sendEvent(name: "thermostatSetpoint", value: coolingSetpoint)
+					sendEvent(name: "thermostatSetpoint", value: coolingSetpoint, unit: units)
 				}
 				if ( (temp - coolingSetpoint) >= threshold) callFor = "cooling"
 			} else { 
 				// Mode is set to auto, let's see if we need to heat
 				if (setPoint != heatingSetpoint) {
-					sendEvent(name: "thermostatSetpoint", value: heatingSetpoint)
+					sendEvent(name: "thermostatSetpoint", value: heatingSetpoint, unit: units)
 				}
 				if ( (heatingSetpoint - temp) >= threshold) callFor = "heating"
 			}
@@ -290,12 +300,13 @@ def setHeatingSetpoint(Double value) {
 			logger("warn", "setHeatingSetpoint() is ignoring out of range cooling setpoint ($newCoolingSetpoint).")
 		} else {
 			// All checks have passed, let's do this
+			def units = getTemperatureScale()
 			def displayUnits = getDisplayUnits()
 			logger("trace", "setHeatingSetpoint() setting heating setpoint to $newHeatingSetpoint $displayUnits")
-			sendEvent(name: "heatingSetpoint", value: newHeatingSetpoint)
+			sendEvent(name: "heatingSetpoint", value: newHeatingSetpoint, unit: units)
 			if (newCoolingSetpoint) {
 				logger("trace", "setHeatingSetpoint() setting cooling setpoint to $newCoolingSetpoint $displayUnits")
-				sendEvent(name: "coolingSetpoint", value: newCoolingSetpoint)
+				sendEvent(name: "coolingSetpoint", value: newCoolingSetpoint, unit: units)
 			}
 			// Setpoints have changed, let's evaluate thermostat mode
 			runIn(2,'evaluateMode')
@@ -361,12 +372,13 @@ def setCoolingSetpoint(Double value) {
 			logger("warn", "setCoolingSetpoint() is ignoring out of range heating setpoint ($newHeatingSetpoint).")
 		} else {
 			// All checks have passed, let's do this
+			def units = getTemperatureScale()
 			def displayUnits = getDisplayUnits()
 			logger("trace", "setCoolingSetpoint() setting cooling setpoint to $newCoolingSetpoint $displayUnits")
-			sendEvent(name: "coolingSetpoint", value: newCoolingSetpoint)
+			sendEvent(name: "coolingSetpoint", value: newCoolingSetpoint, unit: units)
 			if (newHeatingSetpoint) {
 				logger("trace", "setCoolingSetpoint() setting heating setpoint to $newHeatingSetpoint $displayUnits")
-				sendEvent(name: "heatingSetpoint", value: newHeatingSetpoint)
+				sendEvent(name: "heatingSetpoint", value: newHeatingSetpoint, unit: units)
 			}
 			// Setpoints have changed, let's evaluate thermostat mode
 			runIn(2,'evaluateMode')
@@ -392,8 +404,9 @@ def setThermostatThreshold(value) {
 
 def setThermostatThreshold(Double value) {
 	if (value != device.currentValue("thermostatThreshold")) {
+		def units = getTemperatureScale()
 		logger("trace", "setThermostatThreshold($value) - sendEvent")
-		sendEvent(name: "thermostatThreshold", value: value)
+		sendEvent(name: "thermostatThreshold", value: value, unit: units)
 		runIn(2,'evaluateMode')
 	} else {
 		logger("trace", "setThermostatThreshold($value) - already set")
@@ -598,8 +611,9 @@ def poll() {
 //     None
 //************************************************************
 def setTemperature(value) {
+	def units = getTemperatureScale()
 	logger("trace", "setTemperature($value) - sendEvent")
-	sendEvent(name:"temperature", value: value)
+	sendEvent(name:"temperature", value: value, unit: units)
 	sendEvent(name: "lastTempUpdate", value: new Date() )
 	runIn(2,'evaluateMode')
 }
@@ -692,9 +706,10 @@ def coolDown() {
 //     None
 //************************************************************
 def setMinCoolTemp(Double value) {
+	def units = getTemperatureScale()
 	logger("trace", "setMinCoolTemp($value) - sendEvent")
 	def t = device.currentValue("coolingSetpoint")
-	sendEvent(name: "minCoolTemp", value: value)
+	sendEvent(name: "minCoolTemp", value: value, unit: units)
 	if (t < value) {
 		setCoolingSetpoint(value)
 	}
@@ -712,9 +727,10 @@ def setMinCoolTemp(Double value) {
 //     None
 //************************************************************
 def setMaxCoolTemp(Double value) {
+	def units = getTemperatureScale()
 	logger("trace", "setMaxCoolTemp($value) - sendEvent")
 	def t = device.currentValue("coolingSetpoint")
-	sendEvent(name: "maxCoolTemp", value: value)
+	sendEvent(name: "maxCoolTemp", value: value, unit: units)
 	if (t > value) {
 		setCoolingSetpoint(value)
 	}
@@ -732,9 +748,10 @@ def setMaxCoolTemp(Double value) {
 //     None
 //************************************************************
 def setMinHeatTemp(Double value) {
+	def units = getTemperatureScale()
 	logger("trace", "setMinHeatTemp($value)")
 	def t = device.currentValue("heatingSetpoint - sendEvent")
-	sendEvent(name: "minHeatTemp", value: value)
+	sendEvent(name: "minHeatTemp", value: value, unit: units)
 	if (t < value) {
 		setHeatingSetpoint(value)
 	}
@@ -752,9 +769,10 @@ def setMinHeatTemp(Double value) {
 //     None
 //************************************************************
 def setMaxHeatTemp(Double value) {
+	def units = getTemperatureScale()
 	logger("trace", "setMaxHeatTemp($value)")
 	def t = device.currentValue("heatingSetpoint - sendEvent")
-	sendEvent(name: "maxHeatTemp", value: value)
+	sendEvent(name: "maxHeatTemp", value: value, unit: units)
 	if (t > value) {
 		setHeatingSetpoint(value)
 	}
