@@ -38,7 +38,7 @@ def pageConfig() {
 	// Let's just set a few things before starting
 	def displayUnits = getDisplayUnits()
 	def hubScale = getTemperatureScale()
-	
+
 	if (hubScale == "C") {
 		setpointDistance = 3.0
 		heatingSetPoint = 21.0
@@ -50,7 +50,7 @@ def pageConfig() {
 		coolingSetPoint = 76.0
 		thermostatThreshold = 1.0
 	}
-	
+
 	// Display all options for a new instance of the Advanced vThermostat
 	dynamicPage(name: "", title: "", install: true, uninstall: true, refreshInterval:0) {
 		section() {
