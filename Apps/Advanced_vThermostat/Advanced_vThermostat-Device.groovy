@@ -186,21 +186,20 @@ def evaluateMode() {
 	//convert maxUpdateInterval (in minutes) to milliseconds
 	maxIntervalMili = maxInterval * 60000
 
-	if (! (mode == "idle" && now - lastUpdate >= maxIntervalMili) {
-		logger("warn", "Temp sensor(s) maximum update time interval exceeded ($maxInterval minutes), check your sensor(s). Thermostat at idle, nothing to do, all is safe!")
-		return
-	} else if (! (mode in ["emergency stop", "off", "idle"]) && now - lastUpdate >= maxIntervalMili) {
+	if (current == "idle" && now - lastUpdate >= maxIntervalMili) {
+		logger("debug", "Temp sensor(s) maximum update time interval exceeded ($maxInterval minutes), check your sensor(s). Thermostat at idle, nothing to do, all is safe!")
+		//return
+	} else if (! ((mode in ["emergency stop", "off"]) || current == "idle") && now - lastUpdate >= maxIntervalMili) {
 		logger("error", "Temp sensor(s) maximum update time interval exceeded ($maxInterval minutes). Setting EMERGENCY STOP mode until temp sensor(s) starts reporting again!")
 		sendEvent(name: "preEmergencyMode", value: mode)
 		sendEvent(name: "thermostatMode", value: "emergency stop")
-		//runIn(2, 'evaluateMode') // Why evaluate in 2 seconds, just get out of here and evaluate as initially planned 
+		runIn(2, 'evaluateMode') // Re-evaluate to set the state to idle ASAP
 		return
 	} else if (mode == "emergency stop" && now - lastUpdate < maxIntervalMili && device.currentValue("preEmergencyMode")) {
 		logger("warn", "Temp sensor started reporting again, Autorecovered from EMERGENCY STOP. Setting to previous mode.")
-		// sendEvent(name: "thermostatMode", value: device.currentValue("preEmergencyMode")) // Makes no sense, we can't know what mode we have to go in after a recovery
-		sendEvent(name: "preEmergencyMode", value: "")
-		//runIn(2, 'evaluateMode') // Why evaluate in 2 seconds, just get out of here and evaluate as initially planned
-		//return // Let's keep going and see what we have to do since we are no longer in emergency stop mode
+		sendEvent(name: "thermostatMode", value: device.currentValue("preEmergencyMode"))
+		runIn(2, 'evaluateMode')
+		return
 	}
 
 	// set the default mode to idle (safer to have idle than anything else if something goes wrong)
