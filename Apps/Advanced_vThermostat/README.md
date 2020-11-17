@@ -17,6 +17,12 @@ This device handler allows the creation of a new Device thats shows as a thermos
 * Go back in the Advanced vThermostat Manager, create a new vThermostat and select your devices and settings, then click DONE
 * A child app is created so you can change the devices used at any time for that vThermostat, a new device is also created where you can set it up like any other thermostat
 
+# Compatible 15 amp (1800W) smart plugs
+
+* ZOOZ Z-WAVE PLUS POWER SWITCH ZEN15
+* Aeotec Smart Switch 6 Zwave Switch
+* Ikea smart plug (no power reporting if you need that)
+
 Enjoy!
 
 
