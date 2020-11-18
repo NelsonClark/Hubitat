@@ -38,6 +38,11 @@ def pageConfig() {
 	// Let's just set a few things before starting
 	def displayUnits = getDisplayUnits()
 	def hubScale = getTemperatureScale()
+	installed = false
+
+	if (!state.deviceID) {
+		installed = true
+	}
 
 	if (hubScale == "C") {
 		setpointDistance = 3.0
@@ -51,7 +56,7 @@ def pageConfig() {
 		thermostatThreshold = 1.0
 	}
 
-	// Display all options for a new instance of the Advanced vThermostat
+        // Display all options for a new instance of the Advanced vThermostat
 	dynamicPage(name: "", title: "", install: true, uninstall: true, refreshInterval:0) {
 		section() {
 			label title: "Name of new Advanced vThermostat app/device:", required: true
@@ -190,10 +195,10 @@ def initialize(thermostatInstance) {
 		thermostatMode = "off"
 	}
 	
-	// Set device settings
-	if (heatingSetPoint) { thermostatInstance.setHeatingSetpoint(heatingSetPoint) }
-	if (heatingSetPoint) { thermostatInstance.setCoolingSetpoint(coolingSetPoint) }
-	if (heatingSetPoint) { thermostatInstance.setThermostatThreshold(thermostatThreshold) }
+	// Set device settings if this is a new device
+	if (!installed) { thermostatInstance.setHeatingSetpoint(heatingSetPoint) }
+	if (!installed) { thermostatInstance.setCoolingSetpoint(coolingSetPoint) }
+	if (!installed) { thermostatInstance.setThermostatThreshold(thermostatThreshold) }
 	thermostatInstance.setLogLevel(loggingLevel)
 	thermostatInstance.setThermostatMode(thermostatMode)
 
