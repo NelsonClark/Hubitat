@@ -95,33 +95,41 @@ def updated() {
 	// Hub scale has changed, let's convert everything to new scale
 	if (state.currentUnit != hubScale) {
 		logger("trace", "updated() - Update values for new hub scale")
-		//** WHY ARE WE RESETTING TO BASE VALUES ON AN UPDATE ???????? MAKES NO SENSE AT ALL THIS WILL NEED TO CHANGE
-		if (hubScale == "C") {
-			//newValue = convertToHubTempScale(device.currentValue("minCoolTemp"))
-			//sendEvent(name: "minCoolTemp", value: convertToHubTempScale(device.currentValue("minCoolTemp")), unit: "C") // 60°F
-			
-			sendEvent(name: "minCoolTemp", value: 15.5, unit: "C") // 60°F
-			sendEvent(name: "maxCoolTemp", value: 35, unit: "C") // 95°F
-			sendEvent(name: "minHeatTemp", value: 1.5, unit: "C") // 35°F
-			sendEvent(name: "maxHeatTemp", value: 26.5, unit: "C") // 80°F
-			sendEvent(name: "thermostatThreshold", value: 0.5, unit: "C") // Set by user
-			sendEvent(name: "heatingSetpoint", value: 21.0, unit: "C") // 70°F
-			sendEvent(name: "coolingSetpoint", value: 24.5, unit: "C") // 76°F
-			sendEvent(name: "thermostatSetpoint", value: 21.0, unit: "C") // 70°F
-			state.currentUnit = "C"
-		} else {
-			sendEvent(name: "minCoolTemp", value: 60, unit: "F") // 15.5°C
-			sendEvent(name: "maxCoolTemp", value: 95, unit: "F") // 35°C
-			sendEvent(name: "minHeatTemp", value: 35, unit: "F") // 1.5°C
-			sendEvent(name: "maxHeatTemp", value: 80, unit: "F") // 26.5°C
-			sendEvent(name: "thermostatThreshold", value: 1.0, unit: "F") // Set by user
-			sendEvent(name: "heatingSetpoint", value: 70, unit: "F") // 21°C
-			sendEvent(name: "coolingSetpoint", value: 76, unit: "F") // 24.5°C
-			sendEvent(name: "thermostatSetpoint", value: 70, unit: "F") // 21°C
-			state.currentUnit = "F"
+
+		// Let's get all attributes for this device and check them one after the other for changes to do if hub scale unit changed
+		List<com.hubitat.hub.domain.State> currentStatesList = device.getCurrentStates()
+		currentStatesList.each {
+			if (it.unit && it.unit != hubScale) {
+				newValue = convertToHubTempScale(it.value)
+				logger("warn", "updated() - Change Unit for $it.name from it.value it.unit to $newValue $hubScale")
+				//sendEvent(name: it.name, value: newValue, unit: hubScale, isStateChange: true, descriptionText: "Hub unit scale changed")
+			}
 		}
-		sendEvent(name: "maxUpdateInterval", value: 65)
-		sendEvent(name: "lastTempUpdate", value: new Date() )
+	
+
+//		if (hubScale == "C") {
+//			sendEvent(name: "minCoolTemp", value: 15.5, unit: "C") // 60°F
+//			sendEvent(name: "maxCoolTemp", value: 35, unit: "C") // 95°F
+//			sendEvent(name: "minHeatTemp", value: 1.5, unit: "C") // 35°F
+//			sendEvent(name: "maxHeatTemp", value: 26.5, unit: "C") // 80°F
+//			sendEvent(name: "thermostatThreshold", value: 0.5, unit: "C") // Set by user
+//			sendEvent(name: "heatingSetpoint", value: 21.0, unit: "C") // 70°F
+//			sendEvent(name: "coolingSetpoint", value: 24.5, unit: "C") // 76°F
+//			sendEvent(name: "thermostatSetpoint", value: 21.0, unit: "C") // 70°F
+//			state.currentUnit = "C"
+//		} else {
+//			sendEvent(name: "minCoolTemp", value: 60, unit: "F") // 15.5°C
+//			sendEvent(name: "maxCoolTemp", value: 95, unit: "F") // 35°C
+//			sendEvent(name: "minHeatTemp", value: 35, unit: "F") // 1.5°C
+//			sendEvent(name: "maxHeatTemp", value: 80, unit: "F") // 26.5°C
+//			sendEvent(name: "thermostatThreshold", value: 1.0, unit: "F") // Set by user
+//			sendEvent(name: "heatingSetpoint", value: 70, unit: "F") // 21°C
+//			sendEvent(name: "coolingSetpoint", value: 76, unit: "F") // 24.5°C
+//			sendEvent(name: "thermostatSetpoint", value: 70, unit: "F") // 21°C
+//			state.currentUnit = "F"
+//		}
+//		sendEvent(name: "maxUpdateInterval", value: 65)
+//		sendEvent(name: "lastTempUpdate", value: new Date() )
 	} else {
 		logger("trace", "updated() - Nothing to do")
 	}
@@ -148,15 +156,6 @@ def parse(String description) {
 //     None
 //************************************************************
 def evaluateMode() {
-	//List<com.hubitat.hub.domain.State> currentStatesList = device.getCurrentStates()
-	//currentStatesList.each {
-		//sendEvent(name: it.name, value: it.value, unit: it.unit, isStateChange: true, descriptionText: "Refresh Command")
-		//logger("warn", "evaluateMode() - TEST States $it.name, $it.value, $it.unit")
-	//}
-	
-
-
-	
 	logger("trace", "evaluateMode() - START")
 	// Run this loop every minute to see how everything is going
 	runIn(60, 'evaluateMode')
@@ -185,24 +184,25 @@ def evaluateMode() {
 	logger("debug", "now=${now}, lastUpdate=${lastUpdate}, maxInterval=$maxInterval minutes, heatingSetpoint=$heatingSetpoint, coolingSetpoint=$coolingSetpoint, temp=$temp")
 
 	//convert maxUpdateInterval (in minutes) to milliseconds
-	maxInterval = maxInterval * 60000
+	maxIntervalMili = maxInterval * 60000
 
-	if (! (mode in ["emergency stop", "off"]) && now - lastUpdate >= maxInterval ) {
-		logger("error", "Temp sensor maximum update time interval exceeded. Setting EMERGENCY STOP mode until temp sensor starts reporting again")
+	if (current == "idle" && now - lastUpdate >= maxIntervalMili) {
+		logger("debug", "Temp sensor(s) maximum update time interval exceeded ($maxInterval minutes), check your sensor(s). Thermostat at idle, nothing to do, all is safe!")
+		//return
+	} else if (! ((mode in ["emergency stop", "off"]) || current == "idle") && now - lastUpdate >= maxIntervalMili) {
+		logger("error", "Temp sensor(s) maximum update time interval exceeded ($maxInterval minutes). Setting EMERGENCY STOP mode until temp sensor(s) starts reporting again!")
 		sendEvent(name: "preEmergencyMode", value: mode)
 		sendEvent(name: "thermostatMode", value: "emergency stop")
-		runIn(2, 'evaluateMode')
+		runIn(2, 'evaluateMode') // Re-evaluate to set the state to idle ASAP
 		return
-	} else if (mode == "emergency stop" && now - lastUpdate < maxInterval && device.currentValue("preEmergencyMode")) {
-		logger("warn", "Temp sensor started reporting again, Autorecovered from emergencyStop. Setting to previous mode.")
+	} else if (mode == "emergency stop" && now - lastUpdate < maxIntervalMili && device.currentValue("preEmergencyMode")) {
+		logger("warn", "Temp sensor started reporting again, Autorecovered from EMERGENCY STOP. Setting to previous mode.")
 		sendEvent(name: "thermostatMode", value: device.currentValue("preEmergencyMode"))
-		sendEvent(name: "preEmergencyMode", value: "")
-		//** We recovered, should we just keep going going trhu the paces and set to correct mode right now ???
 		runIn(2, 'evaluateMode')
 		return
 	}
 
-	// set the default to idle (safer to have idle than anything else if something goes wrong)
+	// set the default mode to idle (safer to have idle than anything else if something goes wrong)
 	def callFor = "idle"
 
 	// Do we have a treshhold set, if not we do nothing 

@@ -38,7 +38,12 @@ def pageConfig() {
 	// Let's just set a few things before starting
 	def displayUnits = getDisplayUnits()
 	def hubScale = getTemperatureScale()
-	
+	installed = false
+
+	if (!state.deviceID) {
+		installed = true
+	}
+
 	if (hubScale == "C") {
 		setpointDistance = 3.0
 		heatingSetPoint = 21.0
@@ -50,8 +55,8 @@ def pageConfig() {
 		coolingSetPoint = 76.0
 		thermostatThreshold = 1.0
 	}
-	
-	// Display all options for a new instance of the Advanced vThermostat
+
+        // Display all options for a new instance of the Advanced vThermostat
 	dynamicPage(name: "", title: "", install: true, uninstall: true, refreshInterval:0) {
 		section() {
 			label title: "Name of new Advanced vThermostat app/device:", required: true
@@ -69,12 +74,15 @@ def pageConfig() {
 			input "coolOutlets", "capability.switch", title: "Outlets", multiple: true
 		}
 
-		section("Initial Thermostat Settings... (invalid values will be set to the closest valid value)"){
-			input "heatingSetPoint", "decimal", title: "Heating Setpoint in $displayUnits, this should be at least $setpointDistance $displayUnits lower than cooling", required: true, defaultValue: heatingSetPoint
-			input "coolingSetPoint", "decimal", title: "Cooling Setpoint in $displayUnits, this should be at least $setpointDistance $displayUnits higher than heating", required: true, defaultValue: coolingSetPoint
-			//** Removed because we will take control of this decision depending on the outlets selected for heating and/or cooling
-			//input (name:"thermostatMode", type:"enum", title:"Thermostat Mode", options: ["auto","heat","cool","off"], defaultValue:"auto", required: true)
-			input "thermostatThreshold", "decimal", "title": "Temperature Threshold in $displayUnits", required: true, defaultValue: thermostatThreshold
+		// If this is the first time we install this driver, show initial settings
+		if (!state.deviceID) {
+			section("Initial Thermostat Settings... (invalid values will be set to the closest valid value)"){
+				input "heatingSetPoint", "decimal", title: "Heating Setpoint in $displayUnits, this should be at least $setpointDistance $displayUnits lower than cooling", required: true, defaultValue: heatingSetPoint
+				input "coolingSetPoint", "decimal", title: "Cooling Setpoint in $displayUnits, this should be at least $setpointDistance $displayUnits higher than heating", required: true, defaultValue: coolingSetPoint
+				//** Removed because we will take control of this decision depending on the outlets selected for heating and/or cooling
+				//input (name:"thermostatMode", type:"enum", title:"Thermostat Mode", options: ["auto","heat","cool","off"], defaultValue:"auto", required: true)
+				input "thermostatThreshold", "decimal", "title": "Temperature Threshold in $displayUnits", required: true, defaultValue: thermostatThreshold
+			}
 		}
 	
 		section("Log Settings...") {
@@ -187,10 +195,10 @@ def initialize(thermostatInstance) {
 		thermostatMode = "off"
 	}
 	
-	// Set device settings
-	thermostatInstance.setHeatingSetpoint(heatingSetPoint)
-	thermostatInstance.setCoolingSetpoint(coolingSetPoint)
-	thermostatInstance.setThermostatThreshold(thermostatThreshold)
+	// Set device settings if this is a new device
+	if (!installed) { thermostatInstance.setHeatingSetpoint(heatingSetPoint) }
+	if (!installed) { thermostatInstance.setCoolingSetpoint(coolingSetPoint) }
+	if (!installed) { thermostatInstance.setThermostatThreshold(thermostatThreshold) }
 	thermostatInstance.setLogLevel(loggingLevel)
 	thermostatInstance.setThermostatMode(thermostatMode)
 
