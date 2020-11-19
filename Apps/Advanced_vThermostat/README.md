@@ -23,6 +23,7 @@ This device handler allows the creation of a new Device thats shows as a thermos
 * Aeotec Smart Switch 6 Z-Wave Switch
 * Ikea Zigbee smart plug (no power reporting if you need that)
 * TP-Link Kasa HS110 Smart Wi-Fi Plug (community driver)
+* Enerwave ZW15SM-PLUS Z-Wave Plus Wall Switch (Neutral Wire Required)
 
 Enjoy!
 
