@@ -20,10 +20,12 @@ This device handler allows the creation of a new Device thats shows as a thermos
 # Compatible 15 amp (1800W) smart plugs
 
 * ZOOZ ZEN15 Z-WAVE PLUS POWER SWITCH
-* Aeotec Smart Switch 6 Z-Wave Switch
+* Aeotec Smart Switch 6 Z-Wave Plus Plug
 * Ikea Zigbee smart plug (no power reporting if you need that)
 * TP-Link Kasa HS110 Smart Wi-Fi Plug (community driver)
+* Enbrighten 55256 Z-Wave Plus Smart Wall Receptacle
 * Enerwave ZW15SM-PLUS Z-Wave Plus Wall Switch (Neutral Wire Required)
+* Evolve LOM-15TR Z-Wave Wall Receptacle
 
 Enjoy!
 
