@@ -1,0 +1,14 @@
+{
+  "author": "Nelson Clark",
+  "gitHubUrl": "https://github.com/NelsonClark/Hubitat",
+  "payPalUrl": "https://paypal.me/NelsonClarkDonate",
+  "packages": [
+    {
+      "id": "595c9c05-47ce-4ed9-8038-d4fdc3116e60",
+      "name": "Advanced vThermostat",
+      "category": "Convenience",
+      "location": "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/Advanced_vThermostat/packageManifest.json",
+      "description": "Advanced vThermostat is a Hubitat Device Type Handler that will help create a proper virtual thermostat device."
+    }
+  ]
+}
