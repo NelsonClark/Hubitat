@@ -1,0 +1,36 @@
+{
+  "packageName": "Advanced vThermostat",
+  "author": "Nelson Clark",
+  "version": "0.7",
+  "minimumHEVersion": "2.1.9",
+  "dateReleased": "2020-12-01",
+  "apps": [
+    {
+      "id": "560ac9c9-0dc8-4010-b748-5f5cb3c77a62",
+      "name": "Advanced vThermostat Manager",
+      "namespace": "nclark",
+      "location": "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/Advanced_vThermostat/Advanced_vThermostat-Parent.groovy",
+      "required": true,
+      "oauth": false,
+      "primary": false
+    },
+    {
+      "id": "4a21c794-d129-47cd-a7ed-89660678027a",
+      "name": "Advanced vThermostat Child",
+      "namespace": "nclark",
+      "location": "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/Advanced_vThermostat/Advanced_vThermostat-Child.groovy",
+      "required": true,
+      "oauth": false,
+      "primary": false
+    }
+  ],
+  "drivers": [
+    {
+      "id": "0ad321a3-6100-4482-aa74-c9c4285bbee7",
+      "name": "Advanced vThermostat Device",
+      "namespace": "nclark",
+      "location": "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/Advanced_vThermostat/Advanced_vThermostat-Device.groovy",
+      "required": true
+    }
+  ]
+}
