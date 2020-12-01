@@ -8,7 +8,8 @@
       "name": "Advanced vThermostat",
       "category": "Convenience",
       "location": "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/Advanced_vThermostat/packageManifest.json",
-      "description": "Advanced vThermostat is a Hubitat Device Type Handler that will help create a proper virtual thermostat device."
+      "description": "Advanced vThermostat is a Hubitat Device Type Handler that will help create a proper virtual thermostat device.",
+      "tags": [ "Temperature & Humidity", "Tools & Utilities", "Climate Control" ]
     }
   ]
 }
