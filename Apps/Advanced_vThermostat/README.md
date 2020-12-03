@@ -58,6 +58,9 @@ Enjoy!
   * Emergency stop now will not activate if it's idle, this is safe and more logical
   * If hubs scale is changed from either F or C, using the save command will update temperatures to the new scale
   * When setting up a new vThermosat, thermostat mode is automatically chosen based on heating and cooling outlets choices
+* 0.7
+  * Small tweaks in the code
+  * Bug that made the emergency mode kick in even if in idle
 
 
 # ToDo
