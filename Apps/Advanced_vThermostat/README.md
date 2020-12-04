@@ -78,4 +78,5 @@ Things to do in upcomming releases...
 - [ ] When one sensor has not reported for the set amount of time, in a multi sensor setup, it will be "ignored" until it comes back to life
 - [ ] Add support for heating and cooling fan (can be the same for both modes)
 - [ ] Auto-learning for rooms that heat or cool faster to limit overshoot and undershoot (feature request to be considered)
+- [ ] When first installed, should wait a full temp sensor refresh cycle before going to e-stop mode just to give it a chance to get set in it's environment
 
