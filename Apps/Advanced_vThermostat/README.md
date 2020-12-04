@@ -3,7 +3,9 @@
 Advanced vThermostat is a Hubitat Device Type Handler that will help create a proper virtual thermostat device.
 
 It is based on vThermostat by Josh208 (https://github.com/josh208/hubitat/tree/master/vThermostat) that seems to be MIA from the Hubitat community.
-Originally ported from the SmartThings-VirtualThermostat-WithDTH (https://github.com/eliotstocker/SmartThings-VirtualThermostat-WithDTH). 
+Originally ported from the SmartThings-VirtualThermostat-WithDTH (https://github.com/eliotstocker/SmartThings-VirtualThermostat-WithDTH).
+
+For more info, go to: https://community.hubitat.com/t/release-advanced-vthermostat-virtual-thermostat-hvac-control/57633
 
 
 This device handler allows the creation of a new Device thats shows as a thermostat, using the temperature from selected temperature sensor(s), and on/off outlet(s) for heating and/or cooling.
