@@ -24,7 +24,8 @@ metadata {
 		
 		capability "Thermostat"
 		capability "Sensor"
-		capability "Actuator"
+		capability "TemperatureMeasurement"
+		capability "Refresh"
 
 		command "heatUp"
 		command "heatDown"
@@ -105,31 +106,6 @@ def updated() {
 				//sendEvent(name: it.name, value: newValue, unit: hubScale, isStateChange: true, descriptionText: "Hub unit scale changed")
 			}
 		}
-	
-
-//		if (hubScale == "C") {
-//			sendEvent(name: "minCoolTemp", value: 15.5, unit: "C") // 60°F
-//			sendEvent(name: "maxCoolTemp", value: 35, unit: "C") // 95°F
-//			sendEvent(name: "minHeatTemp", value: 1.5, unit: "C") // 35°F
-//			sendEvent(name: "maxHeatTemp", value: 26.5, unit: "C") // 80°F
-//			sendEvent(name: "thermostatThreshold", value: 0.5, unit: "C") // Set by user
-//			sendEvent(name: "heatingSetpoint", value: 21.0, unit: "C") // 70°F
-//			sendEvent(name: "coolingSetpoint", value: 24.5, unit: "C") // 76°F
-//			sendEvent(name: "thermostatSetpoint", value: 21.0, unit: "C") // 70°F
-//			state.currentUnit = "C"
-//		} else {
-//			sendEvent(name: "minCoolTemp", value: 60, unit: "F") // 15.5°C
-//			sendEvent(name: "maxCoolTemp", value: 95, unit: "F") // 35°C
-//			sendEvent(name: "minHeatTemp", value: 35, unit: "F") // 1.5°C
-//			sendEvent(name: "maxHeatTemp", value: 80, unit: "F") // 26.5°C
-//			sendEvent(name: "thermostatThreshold", value: 1.0, unit: "F") // Set by user
-//			sendEvent(name: "heatingSetpoint", value: 70, unit: "F") // 21°C
-//			sendEvent(name: "coolingSetpoint", value: 76, unit: "F") // 24.5°C
-//			sendEvent(name: "thermostatSetpoint", value: 70, unit: "F") // 21°C
-//			state.currentUnit = "F"
-//		}
-//		sendEvent(name: "maxUpdateInterval", value: 65)
-//		sendEvent(name: "lastTempUpdate", value: new Date() )
 	} else {
 		logger("trace", "updated() - Nothing to do")
 	}
@@ -216,33 +192,35 @@ def evaluateMode() {
 			if (setPoint != heatingSetpoint) {
 				sendEvent(name: "thermostatSetpoint", value: heatingSetpoint, unit: units)
 			}
-			if ( (heatingSetpoint - temp) >= threshold) callFor = "heating"
+			//if ((heatingSetpoint - temp) >= threshold) callFor = "heating"
+            if ((current == "idle" && (heatingSetpoint - temp) > threshold) || (current == "heating" && (temp - heatingSetpoint) < threshold)) callFor = "heating"
 		} else if (mode == "cool") {
 			// Mode is set to cool, let's see if we need to cool or not
 			if (setPoint != coolingSetpoint) {
 				sendEvent(name: "thermostatSetpoint", value: coolingSetpoint, unit: units)
 			}
-			if ( (temp - coolingSetpoint) >= threshold) callFor = "cooling"
+			if ((temp - coolingSetpoint) >= threshold) callFor = "cooling"
 		} else if (mode == "auto") {
 			if (temp > coolingSetpoint) { 
 				// Mode is set to auto, let's see if we need to cool
 				if (setPoint != coolingSetpoint) {
 					sendEvent(name: "thermostatSetpoint", value: coolingSetpoint, unit: units)
 				}
-				if ( (temp - coolingSetpoint) >= threshold) callFor = "cooling"
+				if ((temp - coolingSetpoint) >= threshold) callFor = "cooling"
 			} else { 
 				// Mode is set to auto, let's see if we need to heat
 				if (setPoint != heatingSetpoint) {
 					sendEvent(name: "thermostatSetpoint", value: heatingSetpoint, unit: units)
 				}
-				if ( (heatingSetpoint - temp) >= threshold) callFor = "heating"
+				if ((heatingSetpoint - temp) >= threshold) callFor = "heating"
 			}
 		}
 	}
 
 	// Send Event if needed only on what we are doing, idle, cooling, heating
 	logger("debug", "evaluateMode() - threshold=$threshold, actingMode=$mode, origState=$current, newState = $callFor")
-	if (mode != callFor) {
+	if (current != callFor) {
+        logger("debug", "sendEvent : thermostatOperatingState = $callFor")  
 		sendEvent(name: "thermostatOperatingState", value: callFor)
 	}
 }
@@ -260,7 +238,17 @@ def evaluateMode() {
 //     None
 //************************************************************
 def setHeatingSetpoint(value){
-	setHeatingSetpoint(value.toDouble())
+	logger("info", "Converting number $value to type string")
+	newValue = value.toString()
+	logger("info", "Converted number $value to type string equals $newValue")
+	setHeatingSetpoint(newValue)
+}
+
+def setHeatingSetpoint(String value){
+	logger("info", "Converting string $value to type double")
+	newValue = value.toDouble()
+	logger("info", "Converted string $value to type double equals $newValue")
+	setHeatingSetpoint(newValue)
 }
 
 def setHeatingSetpoint(Double value) {
@@ -330,7 +318,17 @@ def setHeatingSetpoint(Double value) {
 //     None
 //************************************************************
 def setCoolingSetpoint(value){
-	setCoolingSetpoint(value.toDouble())
+	logger("info", "Converting number $value to type string")
+	newValue = value.toString()
+	logger("info", "Converted number $value to type string equals $newValue")
+	setCoolingSetpoint(newValue)
+}
+
+def setCoolingSetpoint(String value){
+	logger("info", "Converting string $value to type double")
+	newValue = value.toDouble()
+	logger("info", "Converted string $value to type double equals $newValue")
+	setCoolingSetpoint(newValue)
 }
 
 def setCoolingSetpoint(Double value) {
@@ -599,6 +597,20 @@ def cool() {
 def poll() {
 	logger("trace", "poll() - Nothing to do")
 	null
+}
+
+//************************************************************
+// Refresh
+//     Do nothing, maybe in the future?
+// Signature(s)
+//     refresh()
+// Parameters
+//     None
+// Returns
+//     None
+//************************************************************
+def refresh() {
+  logger("trace", "refresh() - Nothing to do")
 }
 
 
