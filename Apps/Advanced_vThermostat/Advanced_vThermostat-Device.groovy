@@ -40,8 +40,14 @@ metadata {
 		attribute "maxCoolTemp", "number"
 		attribute "lastTempUpdate", "date"
 		attribute "maxUpdateInterval", "number"
-		attribute "preEmergencyMode", "string" //** When returning from an Emergency, we should maybe just go idle?
-		attribute "thermostatOperatingState", "string" //** Already in the Thermostat attributes, does it need to be here?
+		attribute "minCoolingSetpoint", "number" 		//google alexa compatability	
+		attribute "maxCoolingSetpoint", "number" 		//google alexa compatability	
+		attribute "minHeatingSetpoint", "number" 		//google alexa compatability	
+		attribute "maxHeatingSetpoint", "number" 		//google alexa compatability	
+		attribute "thermostatTemperatureSetpoint", "String"	//google
+
+		attribute "preEmergencyMode", "string"			//** When returning from an Emergency, we should maybe just go idle?
+		attribute "thermostatOperatingState", "string"		//** Already in the Thermostat attributes, does it need to be here?
 	}
 }
 
@@ -57,9 +63,13 @@ def installed() {
 	if (hubScale == "C") {
 		state.currentUnit = "C"
 		sendEvent(name: "minCoolTemp", value: 15.5, unit: "C") // 60°F
+		sendEvent(name: "minCoolingSetpoint", value: 15.5, unit: "C") // Google
 		sendEvent(name: "maxCoolTemp", value: 35.0, unit: "C") // 95°F
+		sendEvent(name: "maxCoolingSetpoint", value: 35.0, unit: "C") // Google
 		sendEvent(name: "minHeatTemp", value: 1.5, unit: "C") // 35°F
+		sendEvent(name: "minHeatingSetpoint", value: 1.5, unit: "C") // Google
 		sendEvent(name: "maxHeatTemp", value: 26.5, unit: "C") // 80°F
+		sendEvent(name: "maxHeatingSetpoint", value: 26.5, unit: "C") // Google
 		sendEvent(name: "thermostatThreshold", value: 0.5, unit: "C") // Set by user
 		sendEvent(name: "temperature", value: 22.0, unit: "C") // 72°F
 		sendEvent(name: "heatingSetpoint", value: 21.0, unit: "C") // 70°F
@@ -68,9 +78,13 @@ def installed() {
 	} else {
 		state.currentUnit = "F"
 		sendEvent(name: "minCoolTemp", value: 60, unit: "F") // 15.5°C
+		sendEvent(name: "minCoolingSetpoint", value: 60, unit: "F") // Google
 		sendEvent(name: "maxCoolTemp", value: 95, unit: "F") // 35°C
+		sendEvent(name: "maxCoolingSetpoint", value: 95, unit: "F") // Google
 		sendEvent(name: "minHeatTemp", value: 35, unit: "F") // 1.5°C
+		sendEvent(name: "minHeatingSetpoint", value: 35, unit: "F") // Google
 		sendEvent(name: "maxHeatTemp", value: 80, unit: "F") // 26.5°C
+		sendEvent(name: "maxHeatingSetpoint", value: 80, unit: "F") // Google
 		sendEvent(name: "thermostatThreshold", value: 1.0, unit: "F") // Set by user
 		sendEvent(name: "temperature", value: 72, unit: "F") // 22°C
 		sendEvent(name: "heatingSetpoint", value: 70, unit: "F") // 21°C
@@ -111,6 +125,13 @@ def updated() {
 	}
 }
 
+
+//************************************************************
+//************************************************************
+def configure() {
+	state.supportedModes = [off,heat] // basic modes prior to detailes from device
+	setDeviceLimits()
+}
 
 //************************************************************
 //************************************************************
@@ -220,7 +241,7 @@ def evaluateMode() {
 	// Send Event if needed only on what we are doing, idle, cooling, heating
 	logger("debug", "evaluateMode() - threshold=$threshold, actingMode=$mode, origState=$current, newState = $callFor")
 	if (current != callFor) {
-        logger("debug", "sendEvent : thermostatOperatingState = $callFor")  
+		logger("debug", "sendEvent : thermostatOperatingState = $callFor")  
 		sendEvent(name: "thermostatOperatingState", value: callFor)
 	}
 }
@@ -514,6 +535,8 @@ def heat() {
 	if (device.currentValue("thermostatMode") != "heat") {
 		logger("trace", "heat() - sendEvent")
 		sendEvent(name: "thermostatMode", value: "heat")
+		sendEvent(name: "lastRunningMode",value: "heat")
+		updateDataValue("lastRunningMode", "heat") //this IS needed for Google home
 		runIn(2,'evaluateMode')
 	} else {
 		logger("trace", "heat() - already set")
@@ -577,6 +600,8 @@ def cool() {
 	if (device.currentValue("thermostatMode") != "cool") {
 		logger("trace", "cool() - sendEvent")
 		sendEvent(name: "thermostatMode", value: "cool")
+		sendEvent(name: "lastRunningMode",value: "cool")
+		updateDataValue("lastRunningMode", "cool") //this IS needed for Google home
 		runIn(2,'evaluateMode')
 	} else {
 		logger("trace", "cool() - already set")
