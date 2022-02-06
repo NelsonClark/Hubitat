@@ -21,8 +21,8 @@ Enjoy!
 
 # Version History
 
-* 0.1 - Original Beta release
-* 0.2 - Beta 2
+* 0.1 - Original Beta release private
+* 0.2 - First Public Beta release 
   * Added automatic fetch of events via an API (internet access is needed for this)
   * Minor bug fixes
   * Added ability to disable events via a switch/virtual switch (because of the API)
