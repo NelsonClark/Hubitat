@@ -29,6 +29,7 @@ Enjoy!
   * Seperated Morning and Evening settings
   * Cleaned up the settings page with hideable sections
   * Added configurable notifications
+  * Added a STOP button, to disable the app when outside the Dynamic Pricing event dates
 
 # ToDo
 
