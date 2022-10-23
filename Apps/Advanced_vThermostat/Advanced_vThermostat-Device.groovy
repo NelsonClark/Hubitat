@@ -39,6 +39,7 @@ metadata {
 		attribute "minCoolTemp", "number"
 		attribute "maxCoolTemp", "number"
 		attribute "lastTempUpdate", "date"
+		attribute "supportedThermostatModes", "JSON_OBJECT"
 		attribute "maxUpdateInterval", "number"
 		attribute "minCoolingSetpoint", "number" 		//google alexa compatability	
 		attribute "maxCoolingSetpoint", "number" 		//google alexa compatability	
@@ -104,6 +105,8 @@ def installed() {
 def updated() {
 	//** Send events only if needed ?
 
+	sendEvent(name: "supportedThermostatModes", value: ["heat", "cool", "auto", "off"])
+	
 	// Let's just set a few things before starting
 	def hubScale = getTemperatureScale()
 	
