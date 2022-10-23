@@ -26,13 +26,14 @@ metadata {
 		capability "Sensor"
 		capability "TemperatureMeasurement"
 		capability "Refresh"
+		capability "Configuration"
 
 		command "heatUp"
 		command "heatDown"
 		command "coolUp"
 		command "coolDown"
 		command "setMaxUpdateInterval", ["number"]
-
+		
 		attribute "thermostatThreshold", "number"
 		attribute "minHeatTemp", "number"
 		attribute "maxHeatTemp", "number"
