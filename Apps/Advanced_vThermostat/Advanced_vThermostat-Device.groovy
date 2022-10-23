@@ -97,6 +97,7 @@ def installed() {
 	sendEvent(name: "thermostatOperatingState", value: "idle")
 	sendEvent(name: "maxUpdateInterval", value: 65)
 	sendEvent(name: "lastTempUpdate", value: new Date() )
+	sendEvent(name: "supportedThermostatModes", value: ["heat", "cool", "auto", "off"])
 
 }
 
@@ -133,8 +134,9 @@ def updated() {
 //************************************************************
 //************************************************************
 def configure() {
+	sendEvent(name: "supportedThermostatModes", value: ["heat", "cool", "auto", "off"])
 	state.supportedModes = [off,heat] // basic modes prior to detailes from device
-	setDeviceLimits()
+	//setDeviceLimits()
 }
 
 //************************************************************
