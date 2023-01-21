@@ -1,39 +1,30 @@
 {
-  "packageName": "Advanced vThermostat",
+  "packageName": "Advanced vThermostat V2",
   "author": "Nelson Clark",
-  "version": "0.8.0",
+  "version": "1.0.0",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2022-12-08",
-  "releaseNotes": "v0.8.0 Hysteresis bug, properly formated JSON capability list, some code cleanup.",
-	"documentationLink": "https://github.com/NelsonClark/Hubitat/tree/main/Apps/Advanced_vThermostat",
-	"communityLink": "https://community.hubitat.com/t/release-advanced-vthermostat-virtual-thermostat-hvac-control/57633",
+  "dateReleased": "2023-01-19",
+  "releaseNotes": "v1.0.0 Initial limited release",
+  "documentationLink": "https://github.com/NelsonClark/Hubitat/tree/main/Apps/Advanced_vThermostat_V2",
+  "communityLink": "",
   "apps": [
     {
-      "id": "560ac9c9-0dc8-4010-b748-5f5cb3c77a62",
-      "name": "Advanced vThermostat Manager",
+      "id": "e6f2f766-9560-45dc-8658-542b69916e67",
+      "name": "Advanced vThermostat V2",
       "namespace": "nclark",
-      "location": "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/Advanced_vThermostat/Advanced_vThermostat-Parent.groovy",
+      "location": "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/Adcanced_vThermostat_V2/Advanced_vThermostat_V2.groovy",
       "required": true,
       "oauth": false,
       "primary": false
     },
     {
-      "id": "4a21c794-d129-47cd-a7ed-89660678027a",
-      "name": "Advanced vThermostat Child",
+      "id": "2ad148dd-3902-4b4d-9d77-9a636161e527",
+      "name": "Advanced vThermostat V2 Child",
       "namespace": "nclark",
-      "location": "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/Advanced_vThermostat/Advanced_vThermostat-Child.groovy",
+      "location": "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/Adcanced_vThermostat_V2/Advanced_vThermostat_V2-Child.groovy",
       "required": true,
       "oauth": false,
       "primary": false
-    }
-  ],
-  "drivers": [
-    {
-      "id": "0ad321a3-6100-4482-aa74-c9c4285bbee7",
-      "name": "Advanced vThermostat Device",
-      "namespace": "nclark",
-      "location": "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/Advanced_vThermostat/Advanced_vThermostat-Device.groovy",
-      "required": true
     }
   ]
 }
