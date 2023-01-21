@@ -1,0 +1,17 @@
+{
+    "extends": "recommended",
+    "rules": {
+        "DuplicateMapLiteral": {
+            "enabled": false
+        },
+        "EmptyMethod": {
+            "enabled": false
+        },
+        "InsecureRandom": {
+            "enabled": false
+        },
+        "LineLength": {
+            "enabled": false
+        }
+    }
+}

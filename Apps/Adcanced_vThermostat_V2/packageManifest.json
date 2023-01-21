@@ -1,0 +1,39 @@
+{
+  "packageName": "Advanced vThermostat",
+  "author": "Nelson Clark",
+  "version": "0.8.0",
+  "minimumHEVersion": "2.1.9",
+  "dateReleased": "2022-12-08",
+  "releaseNotes": "v0.8.0 Hysteresis bug, properly formated JSON capability list, some code cleanup.",
+	"documentationLink": "https://github.com/NelsonClark/Hubitat/tree/main/Apps/Advanced_vThermostat",
+	"communityLink": "https://community.hubitat.com/t/release-advanced-vthermostat-virtual-thermostat-hvac-control/57633",
+  "apps": [
+    {
+      "id": "560ac9c9-0dc8-4010-b748-5f5cb3c77a62",
+      "name": "Advanced vThermostat Manager",
+      "namespace": "nclark",
+      "location": "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/Advanced_vThermostat/Advanced_vThermostat-Parent.groovy",
+      "required": true,
+      "oauth": false,
+      "primary": false
+    },
+    {
+      "id": "4a21c794-d129-47cd-a7ed-89660678027a",
+      "name": "Advanced vThermostat Child",
+      "namespace": "nclark",
+      "location": "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/Advanced_vThermostat/Advanced_vThermostat-Child.groovy",
+      "required": true,
+      "oauth": false,
+      "primary": false
+    }
+  ],
+  "drivers": [
+    {
+      "id": "0ad321a3-6100-4482-aa74-c9c4285bbee7",
+      "name": "Advanced vThermostat Device",
+      "namespace": "nclark",
+      "location": "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/Advanced_vThermostat/Advanced_vThermostat-Device.groovy",
+      "required": true
+    }
+  ]
+}
