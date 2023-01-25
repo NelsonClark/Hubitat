@@ -1,0 +1,30 @@
+{
+  "packageName": "Advanced vThermostat V2",
+  "author": "Nelson Clark",
+  "version": "2.0.1",
+  "minimumHEVersion": "2.1.9",
+  "dateReleased": "2023-01-19",
+  "releaseNotes": "v2.0.1 Added most fan support and Hysteresis for heating and cooling.",
+  "documentationLink": "https://github.com/NelsonClark/Hubitat/tree/main/Apps/Advanced_vThermostat_V2",
+  "communityLink": "",
+  "apps": [
+    {
+      "id": "e6f2f766-9560-45dc-8658-542b69916e67",
+      "name": "Advanced vThermostat V2",
+      "namespace": "nclark",
+      "location": "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/Adcanced_vThermostat_V2/Advanced_vThermostat_V2.groovy",
+      "required": true,
+      "oauth": false,
+      "primary": false
+    },
+    {
+      "id": "2ad148dd-3902-4b4d-9d77-9a636161e527",
+      "name": "Advanced vThermostat V2 Child",
+      "namespace": "nclark",
+      "location": "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/Adcanced_vThermostat_V2/Advanced_vThermostat_V2-Child.groovy",
+      "required": true,
+      "oauth": false,
+      "primary": false
+    }
+  ]
+}
