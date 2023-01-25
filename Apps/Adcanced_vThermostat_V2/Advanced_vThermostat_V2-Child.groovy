@@ -18,7 +18,7 @@
  *  Version History...
  *
  *  V2.0.0 - First limited release, some functions not yet implemented (Hysteresis change, Fan Modes other than Auto)
- *
+ *  v2.0.1 - Added most fan support (missing circulate), distinct Hysteresis for heating and cooling, corrected some typos and did some code cleanup.
  *
  *
  */
@@ -97,7 +97,7 @@ def pageConfig() {
             paragraph "<b>Select sensor(s) to use for this vThermostat.</b>"
             input "tempSensors", "capability.temperatureMeasurement", title: "Sensor", multiple: true, required: true
 
-            input "emergencyStopMinutes", "number", title: "<b>Number of minutes before calling an Emergency Stop if all sensors are not reporting during heating or cooling.</b><br>This has no effect if thermostat is idle or off, only when heating or cooling outlets are turned on.<br>Normal settings would be between 60 to 180 minutes depending on how temperature sensors report.<br>Setting this to 0 will disable safety testing and should only be done when using Hydroponique systems where we have very slow rise of temperatures and fire risk is minimal to non existant.", required: true, defaultValue: emergencyStopMinutes
+            input "emergencyStopMinutes", "number", title: "<b>Number of minutes before calling an Emergency Stop if all sensors are not reporting during heating or cooling.</b><br>This has no effect if thermostat is idle or off, only when heating or cooling outlets are turned on.<br>Normal settings would be between 60 to 180 minutes depending on how your temperature sensors report.<br>Setting this to 0 will disable safety testing and should only be done when using hydronic floor heating systems where we have very slow rise of temperatures and fire risk is minimal to non existant.", required: true, defaultValue: emergencyStopMinutes
         }
 
 		section() {
@@ -113,7 +113,7 @@ def pageConfig() {
 
             if (app.getInstallationState() == 'INCOMPLETE') { input "heatingSetpoint", "decimal", title: "<b>Initial Heating Setpoint in ${displayUnits}</b><br>All further changes to this value should be done at the device and/or dashboard.", required: true, defaultValue: heatingSetpoint }
 
-            input "heatingHysteresis", "decimal", title: "<b>Heating Hysteresis in ${displayUnits}</b> Setting this between ${heatingHysteresisLow} and ${heatingHysteresisHigh} will be good.<br> Higher numbers are less confortable because of high temp swing but lower numbers will cycle more often and wear relais faster", range: "0.25..5.0", defaultValue: heatingHysteresis
+            input "heatingHysteresis", "decimal", title: "<b>Heating Hysteresis in ${displayUnits}</b> Setting this between ${heatingHysteresisLow} and ${heatingHysteresisHigh} will be good.<br> Higher numbers are less confortable because of high temp swing but lower numbers will cycle more often and wear relays faster and could cause over heating of some smart plugs.", range: "0.25..5.0", defaultValue: heatingHysteresis
             //input "heatingHysteresis", "enum", title: "<b>Heating Hysteresis in ${displayUnits} (Higher numbers are less confortable because of high temp swing but lower numbers will cycle more often and wear relais faster)</b>", options:["0.1","0.25","0.5","1","2"], defaultValue: heatingHysteresis
         }
 
@@ -130,7 +130,7 @@ def pageConfig() {
 
             if (app.getInstallationState() == 'INCOMPLETE') { input "coolingSetpoint", "decimal", title: "<b>Initial Cooling Setpoint in ${displayUnits}, this should be at least ${setpointDistance} ${displayUnits} lower than cooling.</b><br>All further changes to this value should be done at the device and/or dashboard.", required: true, defaultValue: coolingSetpoint }
 
-            input "coolingHysteresis", "decimal", title: "<b>Cooling Hysteresis in ${displayUnits}</b> Setting this between ${coolingHysteresisLow} and ${coolingHysteresisHigh} will be good.<br> Higher numbers are less confortable because of high temp swing but lower numbers will cycle more often and wear relais faster", range: "0.25..5.0", defaultValue: coolingHysteresis
+            input "coolingHysteresis", "decimal", title: "<b>Cooling Hysteresis in ${displayUnits}</b> Setting this between ${coolingHysteresisLow} and ${coolingHysteresisHigh} will be good.<br> Higher numbers are less confortable because of high temp swing but lower numbers will cycle more often and wear relays faster and could cause over heating of some smart plugs.", range: "0.25..5.0", defaultValue: coolingHysteresis
             //input "coolingHysteresis", "enum", title: "<b>Cooling Hysteresis in ${displayUnits} (Low numbers will cycle more often and wear relais faster)", options:["0.1","0.25","0.5","1","2"], defaultValue: coolingHysteresis
         }
 
@@ -175,12 +175,17 @@ def installed() {
         logger("error", "Error adding Virtual Thermostat child device ${label}: ${e}")
     }
     
-    //Wait for virtual thermostat to install before continuing
+    //Wait for virtual thermostat device to install before continuing
     pauseExecution(500)
 
+
     // Set one time settings here
-    thermostat.setHeatingSetpoint(heatingSetpoint)
-    thermostat.setCoolingSetpoint(coolingSetpoint) 
+    // We need to round these numbers to the closest .5 degrees
+    roundedHeatingSetpoint = ((heatingSetpoint * 2).round(0)) / 2
+    roundedCoolingSetpoint = ((coolingSetpoint * 2).round(0)) / 2
+    
+    thermostat.setHeatingSetpoint(roundedHeatingSetpoint)
+    thermostat.setCoolingSetpoint(roundedCoolingSetpoint)
 
     // Remove initial settings not used now that a child device exists
     app.removeSetting("heatingSetPoint")
@@ -272,9 +277,8 @@ def initialize(thermostatInstance) {
     //On initialize, let's set Hysteresis to the heating mode hysteresis for now, we will change it later
     thermostatHysteresis = heatingHysteresis.toString()
 
-    // Set device settings
-    thermostatInstance.updateSetting("hysteresis", [value: thermostatHysteresis, type: "enum"])
-    thermostatInstance.initialize()
+    // Set Hysteresis settings
+    setThermostatHysteresis(thermostatHysteresis)
     
     //Set logging level of device based on app level, 3 turn on info logging, less than 3 turn it off, 5 turn debug on less than 4 debug off 
     //thermostatInstance.setLogLevel(loggingLevel)
@@ -298,12 +302,14 @@ def initialize(thermostatInstance) {
         thermostatModes =  thermostatModes + '"cool",' 
     }
     
+    // Not sure this will ever be inplemented
     if (emergencyHeatOutlets) { 
         thermostatModes = thermostatModes + '"emergency heat",' 
     }
 
     if (heatingFanOutlets || coolingFanOutlets) {
-        thermostatFanModes = thermostatFanModes + '"auto","circulate","on"'
+        //circulate and on is not yet supported, this will change as new features are added
+        thermostatFanModes = thermostatFanModes + '"auto","on","off"'
     }
 
     thermostatModes = thermostatModes + '"off"]'
@@ -319,16 +325,16 @@ def initialize(thermostatInstance) {
     // Subscribe to the new sensor(s) and virtual thermostat device
     subscribe(tempSensors, "temperature", temperatureChangeHandler)
     subscribe(thermostatInstance, "thermostatOperatingState", thermostatStateHandler)
-    subscribe(location, "temperatureScale", tempScaleChanged)
+    subscribe(thermostatInstance, "thermostatFanMode", thermostatFanModeHandler)
+    
+    // This does not work, will have to check it some other way using a State variable
+    //subscribe(location, "temperatureScale", tempScaleChanged)
 
-    // Update the temperature with these new sensors
+    // Update the temperature now
     updateThermostatTemperature()
 
-    //*****************************************************************************************************************************
-    // WE NEED TO FIND A BETTER WAY TO DO THIS, DO WE REALLY NEED TO RUN EVERY MINUTE ????? NO IF THIS IS ONLY FOR EMERGENCY STOP
-    //*****************************************************************************************************************************
-    // Schedule every 15 minutes a safety test so that we don't go " Burning down the house, my house, it's of the ordinary--------------- " ok quit that already (good song)
-     runEvery1Minute(safetyTest)
+    // Schedule every 15 minutes a safety test so that we don't go "♪♫ Burning down the house, my house, it's of the ordinary--------------- ♪♫" ok quit singing in your head already, ok but it's a good song.
+     runEvery15Minutes(safetyTest)
 
     logger("trace", "--------------- initialize >")
 }
@@ -537,6 +543,33 @@ def updateThermostatTemperature() {
 
 
 //************************************************************
+// setThermostatHysteresis
+//     set the device hysteresis to this new setting
+// Signature(s)
+//     thermostatStateHandler(hysteresis)
+// Parameters
+//     hysteresis : decimal number
+// Returns
+//     None
+//************************************************************
+
+def setThermostatHysteresis(newHysteresis) {
+    
+    thermostat = thermostat ?: getThermostatChildDevice()
+
+    if (location.hub.firmwareVersionString >= "2.3.4.135") {
+        logger("debug","Setting Hysteresis to ${newHysteresis} using new method.")
+        thermostatInstance.setHysteresis(newHysteresis)
+    } else {
+        logger("warn","Setting Hysteresis to ${newHysteresis} using old method, updating hub to version 2.3.4.135 or higher will remove this warning.")
+        newHysteresis = newHysteresis.toString()
+        thermostat.updateSetting("hysteresis", [value: newHysteresis, type: "enum"])
+        thermostat.initialize()
+    }
+}
+
+
+//************************************************************
 // thermostatStateHandler
 //     Handles a thermostat state change event
 //     Do not call this directly, only used to handle events
@@ -568,7 +601,7 @@ def thermostatStateHandler(evt) {
         thermostat.setThermostatFanMode("off")
     }
 
-c}
+}
 
 
 //************************************************************
@@ -588,39 +621,42 @@ def setOutletsState(thermOpState) {
 
     // Did we get a value when called, if not, let's go fetch it directly from the device
     thermOpState = thermOpState ? thermOpState : thermostat.currentValue("thermostatOperatingState")
-    fanOpState = thermostat.currentValue("thermostatFanMode")
-    logger("debug","Thermostat OpState : ${thermOpState}, Fan OpState : ${fanOpState}")
+    fanModeState = thermostat.currentValue("thermostatFanMode")
+    logger("debug","Thermostat OpState : ${thermOpState}, Fan OpState : ${fanModeState}")
 
     if (thermOpState == "heating") {
         //We need to add the Hysteresis setting here
+        setThermostatHysteresis(heatingHysteresis)
 
         coolingOutlets ? coolingOutlets.off() : null
         pauseExecution(250)
         heatingOutlets ? heatingOutlets.on() : null
 
         logger("debug", "Turned on heating outlet(s).")
-        if (fanOpState == "auto") {
-            fanOutlets ? fanOutlets.on() : null
+        if (fanModeState == "auto") {
+            heatingFanOutlets ? heatingFanOutlets.on() : null
             logger("debug", "Turned on all fan outlet(s).")
         }
     } else if (thermOpState == "cooling") {
         //We need to add the Hysteresis setting here
+        setThermostatHysteresis(coolingHysteresis)
 
         heatingOutlets ? heatingOutlets.off() : null
         pauseExecution(250)
         coolingOutlets ? coolingOutlets.on() : null
 
         logger("debug", "Turned on cooling outlet(s).")
-        if (fanOpState == "auto") {
-            fanOutlets ? fanOutlets.on() : null
+        if (fanModeState == "auto") {
+            coolingFanOutlets ? coolingFanOutlets.on() : null
             logger("debug", "Turned on all fan outlet(s).")
         }
     } else {
         heatingOutlets ? heatingOutlets.off() : null
         coolingOutlets ? coolingOutlets.off() : null
         logger("debug", "Turned off all heat/cool outlet(s).")
-        if (fanOpState == "auto") {
-            fanOutlets ? fanOutlets.off() : null
+        if (fanModeState == "auto") {
+            heatingFanOutlets ? heatingFanOutlets.off() : null
+            coolingFanOutlets ? coolingFanOutlets.off() : null
             logger("debug", "Turned off all fan outlet(s).")
         }
     }    
@@ -631,29 +667,58 @@ def setOutletsState(thermOpState) {
 
 
 //************************************************************
-// thermostatFanStateHandler
+// thermostatFanModeHandler
 //     Handles a thermostat fan state change event
 //     Do not call this directly, only used to handle events
 // Signature(s)
-//     thermostatFanStateHandler(evt)
+//     thermostatFanModeHandler(evt)
 // Parameters
 //     evt : Passed by the event subscription
 // Returns
 //     None
 //************************************************************
-def thermostatFanStateHandler(evt) {
-    logger("trace", "< thermostatFanStateHandler event: ${evt.value} ---------------")
+def thermostatFanModeHandler(evt) {
+    logger("trace", "< thermostatFanModeHandler event: ${evt.value} ---------------")
 
-    logger("debug", "Fan Events are not yet implemented!")
+    thermostat = thermostat ?: getThermostatChildDevice()
+    fanModeState = evt.value ? evt.value : thermostat.currentValue("thermostatFanMode")
+    thermOpState = thermostat.currentValue("thermostatOperatingState")
+ 
+    switch (fanModeState) {
+        case "auto" :
+            logger("info", "Thermostat fan state changed to ${fanModeState}")
+            setOutletsState(thermOpState)
+            break
 
-//    thermostat = thermostat ?: getThermostatChildDevice()
+        case "on" :
+            logger("info", "Thermostat fan state changed to ${fanModeState}")
+           if (thermOpState == "heating") {
+                heatingFanOutlets ? heatingFanOutlets.on() : null
+            }
+           if (thermOpState == "cooling") {
+                coolingFanOutlets ? coolingFanOutlets.on() : null
+            }
+            break
+        
+        case "circulate" :
+            logger("info", "Thermostat fan state changed to ${fanModeState}")
+            logger("warn", "Fan Circulate mode not yet implemented.")
+            // Not yet implemented
+            break
 
+        case "off" :
+            logger("info", "Thermostat fan state changed to ${fanModeState}")
+            heatingFanOutlets ? heatingFanOutlets.off() : null
+            coolingFanOutlets ? coolingFanOutlets.off() : null
+            break
 
+        default :
+            logger("warn", "thermostatStateHandler got an empty event: ${fanModeState}!")
+            // Do nothing
+            break
+    }
 
-
-
-
-    logger("trace", "< thermostatFanStateHandler event: ${evt.value} ---------------")
+    logger("trace", "< thermostatFanModeHandler event: ${evt.value} ---------------")
 }
 
 

@@ -18,7 +18,7 @@
  *  Version History...
  *
  *  V2.0.0 - First limited release, some functions not yet implemented (Hysteresis change, Fan Modes other than Auto)
- *
+ *	v2.0.1 - Install check, if not yet installed, message to hit [Done] before being able to add new child vThermostat.
  *
  *
 */
@@ -36,11 +36,18 @@ definition(
 )
 
 preferences {
-	page(name: "Install", title: "Advanced vThermostat V2", install: true, uninstall: true) {
-		section("Devices") {
-		}
-		section {
-			app(name: "Thermostats", appName: "Advanced vThermostat V2 Child", namespace: "nclark", title: "Add Advanced vThermostat V2", multiple: true)
+	page(name: "mainPage")
+}
+
+def mainPage() {
+	return dynamicPage(name: "mainPage", title: "", install: true, uninstall: true) {
+        if (app.getInstallationState() == 'INCOMPLETE') {
+            section("Hit Done to install Advanced vThermostat V2 App") {
+        	}
+        } else {
+			section("<b>Create a new Advanced vThermostat Instance.</b>") {
+				app(name: "Thermostats", appName: "Advanced vThermostat V2 Child", namespace: "nclark", title: "Add Advanced vThermostat V2", multiple: true)
+			}
 		}
 	}
 }
