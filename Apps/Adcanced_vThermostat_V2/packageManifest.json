@@ -1,10 +1,10 @@
 {
   "packageName": "Advanced vThermostat V2",
   "author": "Nelson Clark",
-  "version": "2.0.1",
+  "version": "2.0.11",
   "minimumHEVersion": "2.1.9",
   "dateReleased": "2023-01-19",
-  "releaseNotes": "v2.0.1 Added most fan support and Hysteresis for heating and cooling.",
+  "releaseNotes": "v2.0.11 Typo in ImportURL and removed new mrthod of Hysteresis update until actually implemented.",
   "documentationLink": "https://github.com/NelsonClark/Hubitat/tree/main/Apps/Advanced_vThermostat_V2",
   "communityLink": "",
   "apps": [

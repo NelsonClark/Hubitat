@@ -19,7 +19,7 @@
  *
  *  V2.0.0 - First limited release, some functions not yet implemented (Hysteresis change, Fan Modes other than Auto)
  *	v2.0.1 - Install check, if not yet installed, message to hit [Done] before being able to add new child vThermostat.
- *
+ *	v2.0.11 - updated importURL
  *
 */
 
@@ -31,7 +31,7 @@ definition(
 	category: "Green Living",
 	iconUrl: "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/Advanced_vThermostat_V2/Advanced_vThermostat_V2-logo-small.png",
 	iconX2Url: "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/Advanced_vThermostat_V2/Advanced_vThermostat_V2-logo.png",
-	importUrl: "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/Advanced_vThermostat_V2/Advanced_vThermostat_V2-Parent.groovy",
+	importUrl: "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/Advanced_vThermostat_V2/Advanced_vThermostat_V2.groovy",
 	singleInstance: true
 )
 

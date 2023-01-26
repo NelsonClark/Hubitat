@@ -19,6 +19,7 @@
  *
  *  V2.0.0 - First limited release, some functions not yet implemented (Hysteresis change, Fan Modes other than Auto)
  *  v2.0.1 - Added most fan support (missing circulate), distinct Hysteresis for heating and cooling, corrected some typos and did some code cleanup.
+ *  v2.0.11 - Removed the new way of setting Hysteresys for now until it is actually implemented, latest Beta does not include the update yet.
  *
  *
  */
@@ -557,15 +558,16 @@ def setThermostatHysteresis(newHysteresis) {
     
     thermostat = thermostat ?: getThermostatChildDevice()
 
-    if (location.hub.firmwareVersionString >= "2.3.4.135") {
-        logger("debug","Setting Hysteresis to ${newHysteresis} using new method.")
-        thermostatInstance.setHysteresis(newHysteresis)
-    } else {
-        logger("warn","Setting Hysteresis to ${newHysteresis} using old method, updating hub to version 2.3.4.135 or higher will remove this warning.")
+// 2.3.4.136 does not have new command implemented
+//    if (location.hub.firmwareVersionString >= "2.3.4.136") {
+//        logger("debug","Setting Hysteresis to ${newHysteresis} using new method.")
+//        thermostatInstance.setHysteresis(newHysteresis)
+//    } else {
+        logger("warn","Setting Hysteresis to ${newHysteresis} using old method, a future version of HE Firmware will remove this warning.")
         newHysteresis = newHysteresis.toString()
         thermostat.updateSetting("hysteresis", [value: newHysteresis, type: "enum"])
         thermostat.initialize()
-    }
+//    }
 }
 
 
