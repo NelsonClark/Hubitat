@@ -20,7 +20,7 @@
  *  V2.0.0 - First limited release, some functions not yet implemented (Hysteresis change, Fan Modes other than Auto)
  *  v2.0.1 - Added most fan support (missing circulate), distinct Hysteresis for heating and cooling, corrected some typos and did some code cleanup.
  *  v2.0.11 - Removed the new way of setting Hysteresys for now until it is actually implemented, latest Beta does not include the update yet.
- *
+ *  V2.0.12 - Bug with outlets staying on when in emergency stop mode, quick fix, will have to look in to this further. (thanks to youra)
  *
  */
 
@@ -57,7 +57,7 @@ def pageConfig() {
             heatingHysteresis = 0.5
             coolingHysteresis = 1.0
         } else {
-            state.currentUnit = "F"
+            state.currentScale = "F"
             setpointDistance = 2.0
             heatingSetpoint = 70.0
             coolingSetpoint = 76.0
@@ -115,7 +115,6 @@ def pageConfig() {
             if (app.getInstallationState() == 'INCOMPLETE') { input "heatingSetpoint", "decimal", title: "<b>Initial Heating Setpoint in ${displayUnits}</b><br>All further changes to this value should be done at the device and/or dashboard.", required: true, defaultValue: heatingSetpoint }
 
             input "heatingHysteresis", "decimal", title: "<b>Heating Hysteresis in ${displayUnits}</b> Setting this between ${heatingHysteresisLow} and ${heatingHysteresisHigh} will be good.<br> Higher numbers are less confortable because of high temp swing but lower numbers will cycle more often and wear relays faster and could cause over heating of some smart plugs.", range: "0.25..5.0", defaultValue: heatingHysteresis
-            //input "heatingHysteresis", "enum", title: "<b>Heating Hysteresis in ${displayUnits} (Higher numbers are less confortable because of high temp swing but lower numbers will cycle more often and wear relais faster)</b>", options:["0.1","0.25","0.5","1","2"], defaultValue: heatingHysteresis
         }
 
 		section() {
@@ -132,7 +131,6 @@ def pageConfig() {
             if (app.getInstallationState() == 'INCOMPLETE') { input "coolingSetpoint", "decimal", title: "<b>Initial Cooling Setpoint in ${displayUnits}, this should be at least ${setpointDistance} ${displayUnits} lower than cooling.</b><br>All further changes to this value should be done at the device and/or dashboard.", required: true, defaultValue: coolingSetpoint }
 
             input "coolingHysteresis", "decimal", title: "<b>Cooling Hysteresis in ${displayUnits}</b> Setting this between ${coolingHysteresisLow} and ${coolingHysteresisHigh} will be good.<br> Higher numbers are less confortable because of high temp swing but lower numbers will cycle more often and wear relays faster and could cause over heating of some smart plugs.", range: "0.25..5.0", defaultValue: coolingHysteresis
-            //input "coolingHysteresis", "enum", title: "<b>Cooling Hysteresis in ${displayUnits} (Low numbers will cycle more often and wear relais faster)", options:["0.1","0.25","0.5","1","2"], defaultValue: coolingHysteresis
         }
 
 		section() {
@@ -558,16 +556,15 @@ def setThermostatHysteresis(newHysteresis) {
     
     thermostat = thermostat ?: getThermostatChildDevice()
 
-// 2.3.4.136 does not have new command implemented
-//    if (location.hub.firmwareVersionString >= "2.3.4.136") {
-//        logger("debug","Setting Hysteresis to ${newHysteresis} using new method.")
-//        thermostatInstance.setHysteresis(newHysteresis)
-//    } else {
+    if (location.hub.firmwareVersionString >= "2.3.4.136") {
+        logger("debug","Setting Hysteresis to ${newHysteresis} using new method.")
+        thermostat.setHysteresis(newHysteresis)
+    } else {
         logger("warn","Setting Hysteresis to ${newHysteresis} using old method, a future version of HE Firmware will remove this warning.")
-        newHysteresis = newHysteresis.toString()
-        thermostat.updateSetting("hysteresis", [value: newHysteresis, type: "enum"])
+        //newHysteresis = newHysteresis.toString()
+        thermostat.updateSetting("hysteresis", [value: newHysteresis, type: "decimal"])
         thermostat.initialize()
-//    }
+    }
 }
 
 
@@ -596,13 +593,24 @@ def thermostatStateHandler(evt) {
 
     thermostat = thermostat ?: getThermostatChildDevice()
 
-    if (state?.emergencyStop && !(evt.value == "off")) {
+    if (state?.emergencyStop && !(evt.value == "idle")) {
         //If we are here, state of the thermostat was changed manualy even if we are in emergency mode, change everything back to off and warn
         logger("error","Someone or something tried to turn thermostat back on, we are in Emergency Stop, turning thermostat back off!")
         thermostat.setThermostatMode("off")
         thermostat.setThermostatFanMode("off")
-    }
+        heatingOutlets ? heatingOutlets.off() : null
+        coolingOutlets ? coolingOutlets.off() : null
+        logger("debug", "Turned off all heat/cool outlet(s).")
+        if (fanModeState == "auto") {
+            heatingFanOutlets ? heatingFanOutlets.off() : null
+            coolingFanOutlets ? coolingFanOutlets.off() : null
+            logger("debug", "Turned off all fan outlet(s).")
+        }
+     }
 
+    //setOutletsState(evt.value)
+
+    logger("trace", "--------------- thermostatStateHandler >")
 }
 
 

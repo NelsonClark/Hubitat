@@ -22,13 +22,13 @@
       "filepath": "/d:/My Documents/Hubitat/Hubitat/Apps/Adcanced_vThermostat_V2/Advanced_vThermostat_V2.groovy",
       "id": 427,
       "codeType": "app",
-      "version": 4
+      "version": 5
     },
     {
       "filepath": "/d:/My Documents/Hubitat/Hubitat/Apps/Adcanced_vThermostat_V2/Advanced_vThermostat_V2-Child.groovy",
       "id": 428,
       "codeType": "app",
-      "version": 22
+      "version": 27
     }
   ]
 }
