@@ -384,6 +384,16 @@ def safetyTest() {
             state.emergencyStop = true
             thermostat.setThermostatMode("off")
             thermostat.setThermostatFanMode("off")
+
+            heatingOutlets ? heatingOutlets.off() : null
+            coolingOutlets ? coolingOutlets.off() : null
+            logger("debug", "Turned off all heat/cool outlet(s).")
+            if (fanModeState == "auto") {
+                heatingFanOutlets ? heatingFanOutlets.off() : null
+                coolingFanOutlets ? coolingFanOutlets.off() : null
+                logger("debug", "Turned off all fan outlet(s).")
+            }
+
         } else {
             logger("debug", "Safety test all ok, at least one sensor is reporting within time limits.")
         }
@@ -598,6 +608,7 @@ def thermostatStateHandler(evt) {
         logger("error","Someone or something tried to turn thermostat back on, we are in Emergency Stop, turning thermostat back off!")
         thermostat.setThermostatMode("off")
         thermostat.setThermostatFanMode("off")
+
         heatingOutlets ? heatingOutlets.off() : null
         coolingOutlets ? coolingOutlets.off() : null
         logger("debug", "Turned off all heat/cool outlet(s).")
