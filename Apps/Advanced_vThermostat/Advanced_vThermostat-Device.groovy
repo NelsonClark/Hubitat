@@ -134,8 +134,8 @@ def updated() {
 //************************************************************
 //************************************************************
 def configure() {
-	sendEvent(name: "supportedThermostatModes", value: ["heat", "cool", "auto", "off"])
-	state.supportedModes = [off,heat] // basic modes prior to detailes from device
+	sendEvent(name: "supportedThermostatModes", value: '["auto","cool","heat","off"]')
+	state.supportedModes = '["off","heat"]' // basic modes prior to detailes from device
 	//setDeviceLimits()
 }
 
