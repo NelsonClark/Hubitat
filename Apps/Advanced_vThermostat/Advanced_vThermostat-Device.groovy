@@ -107,7 +107,7 @@ def installed() {
 def updated() {
 	//** Send events only if needed ?
 
-	sendEvent(name: "supportedThermostatModes", value: ["heat", "cool", "auto", "off"])
+	sendEvent(name: "supportedThermostatModes", value: '["heat","cool","auto","off"]')
 	
 	// Let's just set a few things before starting
 	def hubScale = getTemperatureScale()
