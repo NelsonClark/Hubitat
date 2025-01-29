@@ -4,6 +4,7 @@
     "version": "1.0.0",
     "minimumHEVersion": "2.1.9",
     "dateReleased": "2025-01-29",
+    "releaseNotes": "v1.0.0   First Public Release using the official JSON served by Hydro Quebec",
     "apps": [
         {
             "id": "24f7e0e9-8c77-4901-b0f0-b0cbf3d920ca",
