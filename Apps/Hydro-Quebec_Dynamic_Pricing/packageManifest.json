@@ -1,0 +1,18 @@
+{
+    "packageName": "Hydro-Quebec Dynamic Pricing",
+    "author": "Nelson Clark",
+    "version": "1.0.0",
+    "minimumHEVersion": "2.1.9",
+    "dateReleased": "2025-01-29",
+    "apps": [
+        {
+            "id": "24f7e0e9-8c77-4901-b0f0-b0cbf3d920ca",
+            "name": "Hydro-Quebec Dynamic Pricing",
+            "namespace": "nclark",
+            "location": "https://raw.githubusercontent.com/NelsonClark/Hubitat/refs/heads/main/Apps/Hydro-Quebec_Dynamic_Pricing/Hydro-Quebec_Dynamic_Pricing.groovy",
+            "required": true,
+            "oauth": false,
+            "primary": false
+        }
+    ]
+  }
