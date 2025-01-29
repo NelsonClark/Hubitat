@@ -9,7 +9,18 @@
       "category": "Convenience",
       "location": "https://raw.githubusercontent.com/NelsonClark/Hubitat/main/Apps/Advanced_vThermostat/packageManifest.json",
       "description": "Advanced vThermostat is a Hubitat Device Type Handler that will help create a proper virtual thermostat device.",
-      "tags": [ "Temperature & Humidity", "Tools & Utilities", "Climate Control" ]
+      "tags": [
+        "Temperature & Humidity",
+        "Tools & Utilities",
+        "Climate Control"
+      ]
+    },
+    {
+      "id": "41d4d3de-5113-4844-97e3-058a9b0723cc",
+      "name": "Hydro-Quebec Dynamic Pricing",
+      "category": "Convenience",
+      "location": "https://raw.githubusercontent.com/NelsonClark/Hubitat/refs/heads/main/Apps/Hydro-Quebec_Dynamic_Pricing/packageManifest.json",
+      "description": "Fully automate Hydro Quebec's Winter Events for all available programs they offer as of winter 2024-2025"
     }
   ]
 }
