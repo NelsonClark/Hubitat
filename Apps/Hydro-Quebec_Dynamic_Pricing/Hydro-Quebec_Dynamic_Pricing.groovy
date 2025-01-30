@@ -39,7 +39,7 @@ def setConstants(){
 	state.version = "1.0.0"
 	state.HQEventURL = "https://donnees.solutions.hydroquebec.com/donnees-ouvertes/data/json/pointeshivernales.json"
 	//This is for testing purposes, for normal operation must be set to false
-	state.testMode = true
+	state.testMode = false
 }
 
 
