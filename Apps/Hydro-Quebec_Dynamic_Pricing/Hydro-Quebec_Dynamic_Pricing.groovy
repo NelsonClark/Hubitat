@@ -19,6 +19,8 @@ import java.text.SimpleDateFormat
  *
  *  Version history:
  *
+ *  1.0.1 - 2025-01-30 - Added a permanent Poll button, this button will poll and re-schedule all upcomming events
+ *                     - Changed time of first pole of the day to 13:13:13 because of a situation where HQ updated the events
  *  1.0.0 - 2025-01-29 - First public release
  *                     - Now uses the official event JSON from HQ
  *                     - Now supports all available events as of winter 2024-2025
@@ -36,7 +38,7 @@ import java.text.SimpleDateFormat
 
 def setConstants(){
 	state.name = "Hydro-Quebec Dynamic Pricing"
-	state.version = "1.0.0"
+	state.version = "1.0.1"
 	state.HQEventURL = "https://donnees.solutions.hydroquebec.com/donnees-ouvertes/data/json/pointeshivernales.json"
 	//This is for testing purposes, for normal operation must be set to false
 	state.testMode = false
@@ -108,14 +110,15 @@ def pageConfig() {
 				paragraph "You can pause this app when not needed for long periods to save resouces."
 				input name: "btnPause", type: "button", textColor: "white", backgroundColor: "red", title: "  Pause app  "
 			}
-			paragraph "<br><br>"
-
-			if (state.testMode) {
-				input name: "btnPoll", type: "button", title: "Test API Poling"
-				paragraph "<br><br>"
-			}
-		}
+			
+			paragraph "To Poll the API and re-schedule all upcomming events."
+			input name: "btnPoll", type: "button", textColor: "white", backgroundColor: "orange", title: "Poll API"
+		}	
 		
+		section (""){
+			paragraph "<br>"
+		}
+
 		section(title: "Event types...", hideable: true, hidden: hideEventTypeSection()) {
 			input (name: "eventType", type: "enum", title: "<br><b>Hydro Quebec Event types you are Subscribed to</b>", options: eventTypeOptions, required: true, defaultValue: "CPC-D")
 		}
@@ -281,8 +284,8 @@ def initialize() {
 	// Subscribe to Hub restarts so we can make sure events are dealt with correctly
 	subscribe(location, "systemStart", hubRestartHandler)
 	
-	// Schedule to start polling API every day at 11:11:11
-	schedule("11 11 11 ? * * *", startPolling, [overwrite: true])
+	// Schedule to start polling API every day
+	schedule("13 13 13 ? * * *", startPolling, [overwrite: true])
 }
 
 
@@ -1041,6 +1044,12 @@ def getDisplayUnits() {
 void appButtonHandler(String btn) {
 	switch (btn) {
 		case 'btnPoll':
+			unschedule("setHouseInMorningPreEventMode")
+			unschedule("setHouseInMorningEventMode")
+			unschedule("setHouseInMorningNormalMode")
+			unschedule("setHouseInEveningPreEventMode")
+			unschedule("setHouseInEveningEventMode")
+			unschedule("setHouseInEveningNormalMode")
 			poll()
 			break
 		case 'btnStart':

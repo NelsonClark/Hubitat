@@ -4,7 +4,7 @@
     "version": "1.0.0",
     "minimumHEVersion": "2.1.9",
     "dateReleased": "2025-01-29",
-    "releaseNotes": "v1.0.0   First Public Release using the official JSON served by Hydro Quebec",
+    "releaseNotes": "1.0.1 - 2025-01-30 \n     - Added a permanent Poll button, this button will poll and re-schedule all upcomming events.\n     - Changed time of first pole of the day to 13:13:13 because of a situation where HQ updated the events.",
     "apps": [
         {
             "id": "24f7e0e9-8c77-4901-b0f0-b0cbf3d920ca",
