@@ -2,7 +2,7 @@
 
 Hydro-Quebec Dynamic Pricing is a Hubitat App that will fetch Winter Events and setup your house/business as you want during these events and back at the end of the event.
 
-For more info, go to: https://community.hubitat.com/ LINK SOON
+For more info, go to: https://community.hubitat.com/t/release-hydro-quebec-dynamic-pricing/149414
 
 
 This app will process all known winter events as of winter 2024-2025 and allows to turn off switched devices, turn off thermostats, turn down thermostats, etc. Send notifications of new events, start/end of events. Morning and Evening can have different devices,thermostats controlled. New at version 1.0.0, you can now have pre-event settings (mostly to preheat the house before the event)
