@@ -1,7 +1,7 @@
 {
     "packageName": "Hydro-Quebec Dynamic Pricing",
     "author": "Nelson Clark",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "minimumHEVersion": "2.1.9",
     "dateReleased": "2025-01-29",
     "releaseNotes": "1.0.1 - 2025-01-30 \n     - Added a permanent Poll button, this button will poll and re-schedule all upcomming events.\n     - Changed time of first pole of the day to 13:13:13 because of a situation where HQ updated the events.",
