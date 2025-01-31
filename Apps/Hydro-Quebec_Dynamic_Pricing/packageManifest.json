@@ -1,10 +1,10 @@
 {
     "packageName": "Hydro-Quebec Dynamic Pricing",
     "author": "Nelson Clark",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "minimumHEVersion": "2.1.9",
     "dateReleased": "2025-01-29",
-    "releaseNotes": "1.0.1 - 2025-01-30 \n     - Added a permanent Poll button, this button will poll and re-schedule all upcomming events.\n     - Changed time of first pole of the day to 13:13:13 because of a situation where HQ updated the events.",
+    "releaseNotes": "1.0.2 - 2025-01-30 \n     - Added Triggers, aka switches that turn on during an event to fire other automations.\n     - Corrected a bug when first installed and calling a polling method that is no longer available. \n     - Commented out voice message options as I could not test this anymore, will be back soon as soon as I reinstall my SONOS speaker. \n     - Corrected the way pre-events change into events to prevent having some things not return to normal at the end of it all",
     "apps": [
         {
             "id": "24f7e0e9-8c77-4901-b0f0-b0cbf3d920ca",

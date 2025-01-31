@@ -31,14 +31,21 @@ Enjoy!
   * Added configurable notifications
   * Added a STOP button, to disable the app when outside the Dynamic Pricing event dates
 * 0.3.0 - 2022/02/18 - Second Beta release
-  * - Added more debug logging
-  * - Added option to copy over morning to evening options
-  * - Cleaned up the menus
+  * Added more debug logging
+  * Added option to copy over morning to evening options
+  * Cleaned up the menus
 * 1.0.0 - 2025-01-29 - First public release
-  * - Now uses the official event JSON from HQ
-  * - Now supports all available events as of winter 2024-2025
-  * - Added optional Pre-Event mode for people that want to heat up the house before an event
-
+  * Now uses the official event JSON from HQ
+  * Now supports all available events as of winter 2024-2025
+  * Added optional Pre-Event mode for people that want to heat up the house before an event
+* 1.0.1 - 2025-01-30 
+  * Added a permanent Poll button, this button will poll and re-schedule all upcomming events
+  * Changed time of first pole of the day to 13:13:13 because of a situation where HQ updated the events
+* 1.0.2 - 2025-01-31
+  * Added Triggers, aka switches that turn on during an event to fire other automations.
+  * Corrected a bug when first installed and calling a polling method that is no longer available
+  * Commented out voice message options as I could not test this anymore, will be back soon as soon as I reinstall my SONOS speaker.
+  * Corrected the way pre-events change into events to prevent having some things not return to normal at the end of it all
 
 # ToDo
 
