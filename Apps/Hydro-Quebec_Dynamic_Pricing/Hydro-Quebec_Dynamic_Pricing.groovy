@@ -27,7 +27,7 @@ import java.text.SimpleDateFormat
 
 def setConstants(){
 	state.name = "Hydro-Quebec Dynamic Pricing"
-	state.version = "1.0.2"
+	state.version = "1.0.3"
 	state.HQEventURL = "https://donnees.solutions.hydroquebec.com/donnees-ouvertes/data/json/pointeshivernales.json"
 	//This is for testing purposes, for normal operation must be set to false
 	state.testMode = false
@@ -38,10 +38,13 @@ definition(
 	name: "Hydro-Quebec Dynamic Pricing",
 	namespace: "nclark",
 	author: "Nelson Clark",
-	description: "Help maximise your return when opted in Hydro-Quebec Winter Credit Options",
+	description: "Help maximize your return when opted in Hydro-Quebec Winter Credit Options",
 	category: "Green Living",
 	iconUrl: "",
 	iconX2Url: "",
+	documentationLink: "https://community.hubitat.com/t/release-hydro-quebec-dynamic-pricing/149414",
+	importUrl: "https://raw.githubusercontent.com/NelsonClark/Hubitat/refs/heads/main/Apps/Hydro-Quebec_Dynamic_Pricing/Hydro-Quebec_Dynamic_Pricing.groovy",
+	singleInstance: true
 )
 
 
@@ -96,20 +99,23 @@ def pageConfig() {
 				paragraph "This app has been paused, press <b>start</b> to resume normal operation."
 				input name: "btnStart", type: "button", textColor: "white", backgroundColor: "green", title: "  Start app  "
 			} else {
-				paragraph "You can pause this app when not needed for long periods to save resouces."
+				paragraph "You can pause this app when not needed for long periods to save resources."
 				input name: "btnPause", type: "button", textColor: "white", backgroundColor: "red", title: "  Pause app  "
 			}
-			
-			paragraph "To Poll the API and re-schedule all upcomming events."
-			input name: "btnPoll", type: "button", textColor: "white", backgroundColor: "orange", title: "Poll API"
 		}	
 		
 		section (""){
 			paragraph "<br>"
 		}
 
-		section(title: "Event types...", hideable: true, hidden: hideEventTypeSection()) {
+		section(title: "Event types and Polling...", hideable: true, hidden: hideEventTypeSection()) {
 			input (name: "eventType", type: "enum", title: "<br><b>Hydro Quebec Event types you are Subscribed to</b>", options: eventTypeOptions, required: true, defaultValue: "CPC-D")
+
+			paragraph "<br>"
+			input (name: "pollStartTime", type: "time", title: "<br><b>Time to start poling the API <i>Around 13:00 is a good time</i></b>", defaultValue: "13:13")
+		
+			paragraph "<br><b>Poll the API and re-schedule all upcoming events.</b>"
+			input name: "btnPoll", type: "button", textColor: "white", backgroundColor: "orange", title: "Poll API"
 		}
 
 		section (""){
@@ -120,31 +126,31 @@ def pageConfig() {
 			paragraph "<br><b>Minutes before morning event to start morning pre-event mode <i>(enter '1' to disable pre-events)</i>.</b>"
 			input "preEventMorningMinutes", "number", title: "Number of minutes before event", required:true, defaultValue:120, submitOnChange:true
 
-			paragraph "<br><b>Select switche(s) to turn <i>ON</i> durring a morning pre-event (This is mostly used to trigger other automations).</b>"
+			paragraph "<br><b>Select switch(es) to turn <i>ON</i> during a morning pre-event (This is mostly used to trigger other automations).</b>"
 			input "preEventMorningTriggers", "capability.switch", title: "Switches", multiple: true
 		
-			paragraph "<br><b>Select outlet(s)/switche(s) to turn <i>OFF</i> durring a morning pre-event.</b>"
+			paragraph "<br><b>Select outlet(s)/switch(es) to turn <i>OFF</i> during a morning pre-event.</b>"
 			input "preEventMorningSwitches", "capability.switch", title: "Switches", multiple: true
 		
-			paragraph "<br><b>Select thermostats to turn <i>OFF</i> durring a morning pre-event.</b>"
+			paragraph "<br><b>Select thermostats to turn <i>OFF</i> during a morning pre-event.</b>"
 			input "preEventMorningThermostatsOff", "capability.thermostat", title: "Thermostats", multiple: true
 			
-			paragraph "<br><b>Select thermostats to turn <i>UP</i> durring a morning pre-event.</b>"
+			paragraph "<br><b>Select thermostats to turn <i>UP</i> during a morning pre-event.</b>"
 			input "preEventMorningThermostats", "capability.thermostat", title: "Thermostats", multiple: true
 			input "preEventMorningDegrees", "number", title: "Number of degrees $displayUnits to go up from current setting", required:true, defaultValue:3, submitOnChange:true
 		}
 
 		section("Morning events...", hideable: true, hidden : hideMorningEventsSection()){
-			paragraph "<br><b>Select outlet(s)/switche(s) to turn <i>OFF</i> durring a morning event.</b>"
+			paragraph "<br><b>Select outlet(s)/switch(es) to turn <i>OFF</i> during a morning event.</b>"
 			input "eventMorningSwitches", "capability.switch", title: "Switches", multiple: true
 		
-			paragraph "<br><b>Select switche(s) to turn <i>ON</i> durring a morning event (This is mostly used to trigger other automations).</b>"
+			paragraph "<br><b>Select switch(es) to turn <i>ON</i> during a morning event (This is mostly used to trigger other automations).</b>"
 			input "eventMorningTriggers", "capability.switch", title: "Switches", multiple: true
 		
-			paragraph "<br><b>Select thermostats to turn <i>OFF</i> durring a morning event.</b>"
+			paragraph "<br><b>Select thermostats to turn <i>OFF</i> during a morning event.</b>"
 			input "eventMorningThermostatsOff", "capability.thermostat", title: "Thermostats", multiple: true
 			
-			paragraph "<br><b>Select thermostats to turn <i>DOWN</i> durring a morning event.</b>"
+			paragraph "<br><b>Select thermostats to turn <i>DOWN</i> during a morning event.</b>"
 			input "eventMorningThermostats", "capability.thermostat", title: "Thermostats", multiple: true
 			input "eventMorningDegrees", "number", title: "Number of degrees $displayUnits to drop from current setting", required:true, defaultValue:3, submitOnChange:true
 		}
@@ -158,16 +164,16 @@ def pageConfig() {
 				paragraph "<br><b>Minutes before evening event to start evening pre-event mode <i>(enter '1' to disable pre-events)</i>.</b>"
 				input "preEventEveningMinutes", "number", title: "Number of minutes before event", required:true, defaultValue:120, submitOnChange:true
 
-				paragraph "<br><b>Select switche(s) to turn <i>ON</i> durring a evening pre-event (This is mostly used to trigger other automations).</b>"
+				paragraph "<br><b>Select switch(es) to turn <i>ON</i> during a evening pre-event (This is mostly used to trigger other automations).</b>"
 				input "preEventEveningTriggers", "capability.switch", title: "Switches", multiple: true
 		
-				paragraph "<br><b>Select outlet(s)/switche(s) to turn <i>OFF</i> durring a evening pre-event.</b>"
+				paragraph "<br><b>Select outlet(s)/switch(es) to turn <i>OFF</i> during a evening pre-event.</b>"
 				input "preEventEveningSwitches", "capability.switch", title: "Switches", multiple: true
 		
-				paragraph "<br><b>Select thermostats to turn <i>OFF</i> durring a evening pre-event.</b>"
+				paragraph "<br><b>Select thermostats to turn <i>OFF</i> during a evening pre-event.</b>"
 				input "preEventEveningThermostatsOff", "capability.thermostat", title: "Thermostats", multiple: true
 			
-				paragraph "<br><b>Select thermostats to turn <i>UP</i> durring a evening pre-event.</b>"
+				paragraph "<br><b>Select thermostats to turn <i>UP</i> during a evening pre-event.</b>"
 				input "preEventEveningThermostats", "capability.thermostat", title: "Thermostats", multiple: true
 				input "preEventEveningDegrees", "number", title: "Number of degrees $displayUnits to go up from current setting", required:true, defaultValue:3, submitOnChange:true
 			}
@@ -178,16 +184,16 @@ def pageConfig() {
 			input "eveningSameAsMorning", "bool", title: "Use same settings for Evening events", defaultValue:false, submitOnChange:true, width:6
 
 			if (!eveningSameAsMorning) {
-				paragraph "<br><b>Select outlet(s)/switche(s) to turn <i>OFF</i> durring an evening event.</b>"
+				paragraph "<br><b>Select outlet(s)/switch(es) to turn <i>OFF</i> during an evening event.</b>"
 				input "eventEveningSwitches", "capability.switch", title: "Switches", multiple: true
 
-				paragraph "<br><b>Select switche(s) to turn <i>ON</i> durring an evening event (This is mostly used to trigger other automations).</b>"
+				paragraph "<br><b>Select switch(es) to turn <i>ON</i> during an evening event (This is mostly used to trigger other automations).</b>"
 				input "eventEveningTriggers", "capability.switch", title: "Switches", multiple: true
 		
-				paragraph "<br><b>Select thermostats to turn <i>OFF</i> durring an evening event.</b>"
+				paragraph "<br><b>Select thermostats to turn <i>OFF</i> during an evening event.</b>"
 				input "eventEveningThermostatsOff", "capability.thermostat", title: "Thermostats", multiple: true
 
-				paragraph "<br><b>Select thermostats to turn <i>DOWN</i> durring an evening event.</b>"
+				paragraph "<br><b>Select thermostats to turn <i>DOWN</i> during an evening event.</b>"
 				input "eventEveningThermostats", "capability.thermostat", title: "Thermostats", multiple: true
 				input "eventEveningDegrees", "number", title: "Number of degrees $displayUnits to drop from current setting", required:true, defaultValue:3, submitOnChange:true
 			}
@@ -198,12 +204,12 @@ def pageConfig() {
 		}
 
 		section (title: "Notifications...", hideable: true, hidden: hideNotificationSection()) {
-			paragraph "<br><b>Select switch/light reminder to turn on durring events to indicate event state.</b>"
+			paragraph "<br><b>Select switch/light reminder to turn on during events to indicate event state.</b>"
 			input "eventStateSwitch", "capability.switch", title: "Switches", multiple: false
 
 			paragraph "<br><b>Devices to send text notifications to.</b>"
 			input "sendPushMessage", "capability.notification", title: "Send a Pushover notification", multiple:true, required:false, submitOnChange:true
-			if(sendPushMessage) {
+			if (sendPushMessage) {
 				paragraph "<b>Events to send:</b> Select events to send to the selected notification devices."
 				input "startMorningPreEventPush", "bool", title: "Morning Pre-Event Start Report", defaultValue:false, submitOnChange:true, width:6
 				input "startEveningPreEventPush", "bool", title: "Evening Pre-Event Start Report", defaultValue:false, submitOnChange:true, width:6
@@ -217,7 +223,7 @@ def pageConfig() {
 
 //			paragraph "<br><b>Devices to send voice notifications to.</b>"
 //			input "sendVoiceMessage", "capability.speechSynthesis", title: "Send a voice message", multiple:true, required:false, submitOnChange:true
-//			if(sendVoiceMessage) {
+//			if (sendVoiceMessage) {
 //				input "startVoiceMessage", "string", title: "<br><b>Message to say at start of an event</b> (blank will not speak a message)", required: false, defaultValue: "Hydro-Quebec dynamic pricing event is starting"
 //				input "endVoiceMessage", "string", title: "<br><b>Message to say at end of an event</b> (blank will not speak a message)", required: false, defaultValue: "Hydro-Quebec dynamic pricing event has ended"
 //				input "newEventsVoiceMessage", "string", title: "<br><b>Message to say when new Events are added</b> (blank will not speak a message)", required: false, defaultValue: "New Hydro-Quebec dynamic pricing events for tomorrow have been programmed"
@@ -284,11 +290,18 @@ def updated() {
 
 
 def initialize() {
+	state.remove("apiUrl")
+	state.remove("deubgInfo")
+
 	// Subscribe to Hub restarts so we can make sure events are dealt with correctly
 	subscribe(location, "systemStart", hubRestartHandler)
 	
 	// Schedule to start polling API every day
-	schedule("13 13 13 ? * * *", startPolling, [overwrite: true])
+	if (!pollStartTime) {
+		schedule("13 13 13 ? * * *", startPolling, [overwrite: true])
+	} else {
+		schedule(pollStartTime, startPolling, [overwrite: true])
+	}
 }
 
 
@@ -432,13 +445,13 @@ def poll() {
 def pollHandler(resp, data) {
 	logger("trace", "pollHandler")
 	
-	if(resp.getStatus() == 200 || resp.getStatus() == 207) {
+	if ((resp.getStatus() == 200) || (resp.getStatus() == 207)) {
 		logger("debug", "Poll Api Successful")
 		
 		if (state.apiData == resp.data) {
 			logger("debug", "API data has not changed, nothing to do")
-			if (state.testMode) {
-				logger("debug", "We are in test mode, let's process the JSON file anyway!")
+			if ((state.testMode) || (state.pollManually)) {
+				logger("debug", "We are in manual mode, let's process the JSON file anyway!")
 				handleHQEvents()
 			}
             currTime = new Date()
@@ -483,7 +496,7 @@ def handleHQEvents() {
 	//Let's go through each event in the JSON file and schedule all new events
 	newEventsPush = ""
 			
-	for(eventInfo in response.evenements) {
+	for (eventInfo in response.evenements) {
  
 		def date = new Date()
 								
@@ -509,7 +522,7 @@ def handleHQEvents() {
 				calendar.setTime(timeVarObj)
 				int integerHour = calendar.get(Calendar.HOUR_OF_DAY)
 
-				if (eventStartPeriod > date && !state.testMode) {
+				if ((eventStartPeriod > date) && (!state.testMode)) {
 					//Let's program events 
 					if (integerHour < 12) {
 						schedule(convertTimeToCron(eventInfo.dateDebut, preEventMorningMinutes * -1), setHouseInMorningPreEventMode, [overwrite: false])
@@ -527,29 +540,30 @@ def handleHQEvents() {
 	}
 			
 	//Send and log info if required
-	if(sendPushMessage && newEventsPush && !state.testMode) {
+	if ((sendPushMessage) && (newEventsPush) && (!state.testMode)) {
 		sendPushMessage.deviceNotification(newEventsPush)
 	}
 	if (state.testMode) {
 		logger("debug", "No events have been scheduled since the app is in test mode, next line is for DEBUG purposes only!")
 	}
+	state.pollManually = false
 	logger("debug", newEventsPush)
 }
 
 //************************************************************
 // convertTimeToCron
-//     Converts ISO time to a CRON esxpression adding minutes
-//		to substract minutes, add a negative number
+//     Converts ISO time to a CRON expression adding minutes
+//		to subtract minutes, add a negative number
 //
 // Signature(s)
 //     string = convertTimeToCron(string timeVar, string minutesToAdd)
 //
 // Parameters
-//     timeVar : ISO formated date
+//     timeVar : ISO formatted date
 //     minutesToAdd : Minutes to add or subtract
 //
 // Returns
-//     CRON formated string
+//     CRON formatted string
 //
 //************************************************************
 def convertTimeToCron(timeVar, minutesToAdd = 0) {
@@ -589,7 +603,7 @@ def convertTimeToCron(timeVar, minutesToAdd = 0) {
 def setHouseInMorningPreEventMode() {
 	logger("trace", "setHouseInMorningPreEventMode")
 	
-	if (eventMorningDisableSwitch || preEventMorningMinutes == 1) {
+	if ((eventMorningDisableSwitch) || (preEventMorningMinutes == 1)) {
 		logger("warn", "Morning pre-event disabled, skipping this event!")
 		exit
 	}
@@ -600,23 +614,24 @@ def setHouseInMorningPreEventMode() {
 		eventStateSwitch.on()
 	}
 	
-	if(sendPushMessage && startMorningPreEventPush) {
+	if ((sendPushMessage) && (startMorningPreEventPush)) {
+		logger("trace", "Push Message: Morning pre-event fired!")
 		sendPushMessage.deviceNotification("Morning pre-event fired!")
 	}
 	
 	def prePreviousSettings = [:]
 	
-	for(preEventTrigger in preEventMorningTriggers) {
+	for (preEventTrigger in preEventMorningTriggers) {
 		prePreviousSettings.put("$preEventTrigger",preEventTrigger.currentValue("switch"))
 		preEventTrigger.on()
 	}
 	
-	for(eventSwitch in preEventMorningSwitches) {
+	for (eventSwitch in preEventMorningSwitches) {
 		prePreviousSettings.put("$eventSwitch",eventSwitch.currentValue("switch"))
 		eventSwitch.off()
 	}
 
-	for(thermostat in preEventMorningThermostatsOff) {
+	for (thermostat in preEventMorningThermostatsOff) {
 		prePreviousSettings.put("$thermostat",thermostat.currentValue("thermostatMode"))
 		if (thermostat.currentValue("thermostatMode") == "off") {      
 			logger("debug", "$thermostat already off")
@@ -626,9 +641,9 @@ def setHouseInMorningPreEventMode() {
 		}
 	}
 
-	for(thermostat in preEventMorningThermostats) {
+	for (thermostat in preEventMorningThermostats) {
 		prePreviousSettings.put("$thermostat",thermostat.currentValue("heatingSetpoint"))
-		newSetpoint = thermostat.currentValue("heatingSetpoint") + preEventEveningDegrees.toInteger()
+		newSetpoint = thermostat.currentValue("heatingSetpoint") + preEventMorningDegrees.toInteger()
 		thermostat.setHeatingSetpoint(newSetpoint)
 		logger("debug", "$thermostat heating setpoint set to $newSetpoint")
 	}
@@ -636,7 +651,7 @@ def setHouseInMorningPreEventMode() {
 	state.prePreviousSettings = prePreviousSettings
 
 	app.updateLabel("$state.name <span style='color:green'>Morning pre-event in progress</span>")
-
+	logger("trace", "end setHouseInMorningPreEventMode")
 }
 
 
@@ -664,19 +679,21 @@ def setHouseInMorningEventMode() {
 	
 	if (state.currentMode == "MorningPreEvent") {
 
-		for(preEventTrigger in preEventMorningTriggers) {
+		logger("trace", "revert setHouseInMorningPreEventMode")
+		
+		for (preEventTrigger in preEventMorningTriggers) {
 			def switchState = state.prePreviousSettings.find{ it.key == "$preEventTrigger" }?.value
-			if(switchState && switchState == "on") {
+			if ((switchState) && (switchState == "off")) {
 				logger("debug", "$preEventTrigger turned $switchState")
-				preEventTrigge.off()
+				preEventTrigger.off()
 			} else {
 				logger("debug", "$preEventTrigger not changed")
 			}
 		}
 
-		for(preEventSwitch in preEventMorningSwitches) {
+		for (preEventSwitch in preEventMorningSwitches) {
 			def switchState = state.prePreviousSettings.find{ it.key == "$preEventSwitch" }?.value
-			if(switchState && switchState == "on") {
+			if ((switchState) && (switchState == "on")) {
 				logger("debug", "$preEventSwitch turned $switchState")
 				preEventSwitch.on()
 			} else {
@@ -684,7 +701,7 @@ def setHouseInMorningEventMode() {
 			}
 		}
 
-		for(thermostat in preEventMorningThermostatsOff) {
+		for (thermostat in preEventMorningThermostatsOff) {
 			def thermostatMode = state.prePreviousSettings.find{ it.key == "$thermostat" }?.value
 			if (thermostatMode) {
 				thermostat.setThermostatMode("$thermostatMode")
@@ -692,7 +709,7 @@ def setHouseInMorningEventMode() {
 			}
 		}
 
-		for(thermostat in preEventMorningThermostats) {
+		for (thermostat in preEventMorningThermostats) {
 			def thermostatTemp = state.prePreviousSettings.find{ it.key == "$thermostat" }?.value
 			if (thermostatTemp) {
 				thermostat.setHeatingSetpoint(thermostatTemp)
@@ -701,7 +718,8 @@ def setHouseInMorningEventMode() {
 		}
 
 		state.remove("prePreviousSettings")
-
+		pauseExecution(10000)
+		logger("trace", "end revert setHouseInMorningPreEventMode")
 	}
 	
 	state.currentMode = "MorningEvent"
@@ -710,23 +728,24 @@ def setHouseInMorningEventMode() {
 		eventStateSwitch.on()
 	}
 	
-	if(sendPushMessage && startMorningEventPush) {
+	if ((sendPushMessage) && (startMorningEventPush)) {
+		logger("trace", "Morning event fired!")
 		sendPushMessage.deviceNotification("Morning event fired!")
 	}
 	
 	def previousSettings = [:]
 	
-	for(eventTrigger in eventMorningTriggers) {
+	for (eventTrigger in eventMorningTriggers) {
 		previousSettings.put("$eventTrigger",eventTrigger.currentValue("switch"))
 		eventTrigger.on()
 	}
 
-	for(eventSwitch in eventMorningSwitches) {
+	for (eventSwitch in eventMorningSwitches) {
 		previousSettings.put("$eventSwitch",eventSwitch.currentValue("switch"))
 		eventSwitch.off()
 	}
 
-	for(thermostat in eventMorningThermostatsOff) {
+	for (thermostat in eventMorningThermostatsOff) {
 		previousSettings.put("$thermostat",thermostat.currentValue("thermostatMode"))
 		if (thermostat.currentValue("thermostatMode") == "off") {      
 			logger("debug", "$thermostat already off")
@@ -736,9 +755,9 @@ def setHouseInMorningEventMode() {
 		}
 	}
 
-	for(thermostat in eventMorningThermostats) {
+	for (thermostat in eventMorningThermostats) {
 		previousSettings.put("$thermostat",thermostat.currentValue("heatingSetpoint"))
-		newSetpoint = thermostat.currentValue("heatingSetpoint") - eventEveningDegrees.toInteger()
+		newSetpoint = thermostat.currentValue("heatingSetpoint") - eventMorningDegrees.toInteger()
 		thermostat.setHeatingSetpoint(newSetpoint)
 		logger("debug", "$thermostat heating setpoint set to $newSetpoint")
 	}
@@ -746,7 +765,7 @@ def setHouseInMorningEventMode() {
 	state.previousSettings = previousSettings
 
 	app.updateLabel("$state.name <span style='color:green'>Morning Event in progress</span>")
-
+	logger("trace", "end setHouseInMorningEventMode")
 }
 
 
@@ -777,13 +796,9 @@ def setHouseInMorningNormalMode() {
 		eventStateSwitch.off()
 	}
 	
-	if(sendPushMessage && endMorningEventPush) {
-		sendPushMessage.deviceNotification("Back to normal!")
-	}
-	
-	for(eventTrigger in eventMorningTriggers) {
+	for (eventTrigger in eventMorningTriggers) {
 		def switchState = state.previousSettings.find{ it.key == "$eventTrigger" }?.value
-		if(switchState && switchState == "on") {
+		if ((switchState) && (switchState == "off")) {
 			logger("debug", "$eventTrigger turned $switchState")
 			eventTrigger.off()
 		} else {
@@ -791,9 +806,9 @@ def setHouseInMorningNormalMode() {
 		}
 	}
 
-	for(eventSwitch in eventMorningSwitches) {
+	for (eventSwitch in eventMorningSwitches) {
 		def switchState = state.previousSettings.find{ it.key == "$eventSwitch" }?.value
-		if(switchState && switchState == "on") {
+		if ((switchState) && (switchState == "on")) {
 			logger("debug", "$eventSwitch turned $switchState")
 			eventSwitch.on()
 		} else {
@@ -801,7 +816,7 @@ def setHouseInMorningNormalMode() {
 		}
 	}
 
-	for(thermostat in eventMorningThermostatsOff) {
+	for (thermostat in eventMorningThermostatsOff) {
 		def thermostatMode = state.previousSettings.find{ it.key == "$thermostat" }?.value
 		if (thermostatMode) {
 			thermostat.setThermostatMode("$thermostatMode")
@@ -809,7 +824,7 @@ def setHouseInMorningNormalMode() {
 		}
 	}
 
-	for(thermostat in eventMorningThermostats) {
+	for (thermostat in eventMorningThermostats) {
 		def thermostatTemp = state.previousSettings.find{ it.key == "$thermostat" }?.value
 		if (thermostatTemp) {
 			thermostat.setHeatingSetpoint(thermostatTemp)
@@ -817,8 +832,14 @@ def setHouseInMorningNormalMode() {
 		}
 	}
 	
+	if ((sendPushMessage) && (endMorningEventPush)) {
+		logger("trace", "Push Message: Back to normal!")
+		sendPushMessage.deviceNotification("Back to normal!")
+	}
+
 	state.remove("previousSettings")
 	app.updateLabel("$state.name")
+	logger("trace", "end setHouseInMorningNormalMode")
 	
 }
 
@@ -840,7 +861,7 @@ def setHouseInMorningNormalMode() {
 def setHouseInEveningPreEventMode() {
 	logger("trace", "setHouseInEveningPreEventMode")
 
-	if (eventEveningDisableSwitch || preEventEveningMinutes == 1) {
+	if ((eventEveningDisableSwitch) || (preEventEveningMinutes == 1)) {
 		logger("warn", "Evening event disabled, skipping this event!")
 		exit
 	}
@@ -851,23 +872,24 @@ def setHouseInEveningPreEventMode() {
 		eventStateSwitch.on()
 	}
 	
-	if(sendPushMessage && StartEveningPreEventPush) {
+	if ((sendPushMessage) && (StartEveningPreEventPush)) {
+		logger("trace", "Push Message: Evening event fired!")
 		sendPushMessage.deviceNotification("Evening event fired!")
 	}
 	
 	def prePreviousSettings = [:]
 	
-	for(preEventTrigger in preEventEveningTriggers) {
+	for (preEventTrigger in preEventEveningTriggers) {
 		prePreviousSettings.put("$preEventTrigger",preEventTrigger.currentValue("switch"))
 		preEventTrigger.on()
 	}
 
-	for(eventSwitch in preEventEveningSwitches) {
+	for (eventSwitch in preEventEveningSwitches) {
 		prePreviousSettings.put("$eventSwitch",eventSwitch.currentValue("switch"))
 		eventSwitch.off()
 	}
 
-	for(thermostat in preEventEveningThermostatsOff) {
+	for (thermostat in preEventEveningThermostatsOff) {
 		prePreviousSettings.put("$thermostat",thermostat.currentValue("thermostatMode"))
 		if (thermostat.currentValue("thermostatMode") == "off") {      
 			logger("debug", "$thermostat already off")
@@ -877,7 +899,7 @@ def setHouseInEveningPreEventMode() {
 		}
 	}
 
-	for(thermostat in preEventEveningThermostats) {
+	for (thermostat in preEventEveningThermostats) {
 		prePreviousSettings.put("$thermostat",thermostat.currentValue("heatingSetpoint"))
 		newSetpoint = thermostat.currentValue("heatingSetpoint") + preEventEveningDegrees.toInteger()
 		thermostat.setHeatingSetpoint(newSetpoint)
@@ -887,7 +909,7 @@ def setHouseInEveningPreEventMode() {
 	state.prePreviousSettings = prePreviousSettings
 
 	app.updateLabel("$state.name <span style='color:green'>Evening pre-event in progress</span>")
-
+	logger("trace", "end setHouseInEveningPreEventMode")
 }
 
 
@@ -915,19 +937,21 @@ def setHouseInEveningEventMode() {
 
 	if (state.currentMode == "EveningPreEvent") {
 
-		for(preEventTrigger in preEventEveningTriggers) {
+		logger("trace", "revert setHouseInEveningPreEventMode")
+
+		for (preEventTrigger in preEventEveningTriggers) {
 			def switchState = state.prePreviousSettings.find{ it.key == "$preEventTrigger" }?.value
-			if(switchState && switchState == "on") {
+			if ((switchState) && (switchState == "off")) {
 				logger("debug", "$preEventTrigger turned $switchState")
-				preEventTrigge.off()
+				preEventTrigger.off()
 			} else {
 				logger("debug", "$preEventTrigger not changed")
 			}
 		}
 
-		for(preEventSwitch in preEventEveningSwitches) {
+		for (preEventSwitch in preEventEveningSwitches) {
 			def switchState = state.prePreviousSettings.find{ it.key == "$preEventSwitch" }?.value
-			if(switchState && switchState == "on") {
+			if ((switchState) && (switchState == "on")) {
 				logger("debug", "$preEventSwitch turned $switchState")
 				preEventSwitch.on()
 			} else {
@@ -935,7 +959,7 @@ def setHouseInEveningEventMode() {
 			}
 		}
 
-		for(thermostat in preEventEveningThermostatsOff) {
+		for (thermostat in preEventEveningThermostatsOff) {
 			def thermostatMode = state.prePreviousSettings.find{ it.key == "$thermostat" }?.value
 			if (thermostatMode) {
 				thermostat.setThermostatMode("$thermostatMode")
@@ -943,7 +967,7 @@ def setHouseInEveningEventMode() {
 			}
 		}
 
-		for(thermostat in preEventEveningThermostats) {
+		for (thermostat in preEventEveningThermostats) {
 			def thermostatTemp = state.prePreviousSettings.find{ it.key == "$thermostat" }?.value
 			if (thermostatTemp) {
 				thermostat.setHeatingSetpoint(thermostatTemp)
@@ -952,7 +976,8 @@ def setHouseInEveningEventMode() {
 		}
 
 		state.remove("prePreviousSettings")
-
+		pauseExecution(10000)
+		logger("trace", "end revert setHouseInEveningPreEventMode")
 	}
 	
 	state.currentMode = "EveningEvent"
@@ -961,23 +986,24 @@ def setHouseInEveningEventMode() {
 		eventStateSwitch.on()
 	}
 	
-	if(sendPushMessage && StartEveningEventPush) {
+	if ((sendPushMessage) && (StartEveningEventPush)) {
+		logger("trace", "Push Message: Evening event fired!")
 		sendPushMessage.deviceNotification("Evening event fired!")
 	}
 	
 	def previousSettings = [:]
 	
-	for(eventTrigger in eventEveningTriggers) {
+	for (eventTrigger in eventEveningTriggers) {
 		previousSettings.put("$eventTrigger",eventTrigger.currentValue("switch"))
 		eventTrigger.on()
 	}
 
-	for(eventSwitch in eventEveningSwitches) {
+	for (eventSwitch in eventEveningSwitches) {
 		previousSettings.put("$eventSwitch",eventSwitch.currentValue("switch"))
 		eventSwitch.off()
 	}
 
-	for(thermostat in eventEveningThermostatsOff) {
+	for (thermostat in eventEveningThermostatsOff) {
 		previousSettings.put("$thermostat",thermostat.currentValue("thermostatMode"))
 		if (thermostat.currentValue("thermostatMode") == "off") {      
 			logger("debug", "$thermostat already off")
@@ -987,7 +1013,7 @@ def setHouseInEveningEventMode() {
 		}
 	}
 
-	for(thermostat in eventEveningThermostats) {
+	for (thermostat in eventEveningThermostats) {
 		previousSettings.put("$thermostat",thermostat.currentValue("heatingSetpoint"))
 		newSetpoint = thermostat.currentValue("heatingSetpoint") - eventEveningDegrees.toInteger()
 		thermostat.setHeatingSetpoint(newSetpoint)
@@ -997,7 +1023,7 @@ def setHouseInEveningEventMode() {
 	state.previousSettings = previousSettings
 
 	app.updateLabel("$state.name <span style='color:green'>Evening Event in progress</span>")
-
+	logger("trace", "end setHouseInEveningEventMode")
 }
 
 
@@ -1028,13 +1054,9 @@ def setHouseInEveningNormalMode() {
 		eventStateSwitch.off()
 	}
 	
-	if(sendPushMessage && endEveningEventPush) {
-		sendPushMessage.deviceNotification("Back to normal!")
-	}
-
-	for(eventTrigger in eventEveningTriggers) {
+	for (eventTrigger in eventEveningTriggers) {
 		def switchState = state.previousSettings.find{ it.key == "$eventTrigger" }?.value
-		if(switchState && switchState == "on") {
+		if ((switchState) && (switchState == "off")) {
 			logger("debug", "$eventTrigger turned $switchState")
 			eventTrigger.off()
 		} else {
@@ -1042,9 +1064,9 @@ def setHouseInEveningNormalMode() {
 		}
 	}
 	
-	for(eventSwitch in eventEveningSwitches) {
+	for (eventSwitch in eventEveningSwitches) {
 		def switchState = state.previousSettings.find{ it.key == "$eventSwitch" }?.value
-		if(switchState && switchState == "on") {
+		if ((switchState) && (switchState == "on")) {
 			logger("debug", "$eventSwitch turned $switchState")
 			eventSwitch.on()
 		} else {
@@ -1052,7 +1074,7 @@ def setHouseInEveningNormalMode() {
 		}
 	}
 
-	for(thermostat in eventEveningThermostatsOff) {
+	for (thermostat in eventEveningThermostatsOff) {
 		 def thermostatMode = state.previousSettings.find{ it.key == "$thermostat" }?.value
 		if (thermostatMode) {
 			thermostat.setThermostatMode("$thermostatMode")
@@ -1060,7 +1082,7 @@ def setHouseInEveningNormalMode() {
 		}
    }
 
-	for(thermostat in eventEveningThermostats) {
+	for (thermostat in eventEveningThermostats) {
 		def thermostatTemp = state.previousSettings.find{ it.key == "$thermostat" }?.value
 		if (thermostatTemp) {
 			thermostat.setHeatingSetpoint(thermostatTemp)
@@ -1068,9 +1090,14 @@ def setHouseInEveningNormalMode() {
 		}
 	}
 
+	if ((sendPushMessage) && (endEveningEventPush)) {
+		logger("trace", "Push Message: Back to normal!")
+		sendPushMessage.deviceNotification("Back to normal!")
+	}
+
 	state.remove("previousSettings")
 	app.updateLabel("$state.name")
-
+	logger("trace", "end setHouseInEveningNormalMode")
 }
 
 
@@ -1171,6 +1198,7 @@ def getDisplayUnits() {
 void appButtonHandler(String btn) {
 	switch (btn) {
 		case 'btnPoll':
+			state.pollManually = true
 			unschedule("setHouseInMorningPreEventMode")
 			unschedule("setHouseInMorningEventMode")
 			unschedule("setHouseInMorningNormalMode")
