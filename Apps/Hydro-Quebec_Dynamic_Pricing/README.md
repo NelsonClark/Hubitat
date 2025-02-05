@@ -53,6 +53,11 @@ Enjoy!
   * Added polling start time (you will need to go change in the app settings and then hit done for this to take effect)
   * Added some more trace logging for future features coming up
   * Various other bug squashing
+* 1.0.4 - 2025-02-05
+  * NEW FEATURE, option to recover after a hub reboot, this will cause all scheduled events to be removed and recheck everything, if within an event period, that event will start immediately
+  * If the app is started or a manual poll of the API is done, if we are within an event period, that event period will start immediately
+  * More tweaking of the code
+  * Various other bug squashing
 
 
 # ToDo
@@ -64,7 +69,7 @@ Things to do in upcoming releases...
 - [ ] Menu switch to make Evening settings the same as Morning settings
 - [ ] Deal with thermostats that are also controlled via Thermostat Schedular
 - [ ] Speech notifications to TTS devices (like SONOS, etc.)
-- [ ] Add hub restart handler to reschedule any on going events and future events
+- [x] Add hub restart handler to reschedule any on going events and future events
 
 
 PULL requests are welcome

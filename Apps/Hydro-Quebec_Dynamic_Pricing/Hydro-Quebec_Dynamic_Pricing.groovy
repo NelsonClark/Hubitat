@@ -1,4 +1,5 @@
 import java.text.SimpleDateFormat
+import groovy.time.TimeCategory
 /*
  *  Hydro-Quebec Dynamic Pricing App
  *  Project URL: https://github.com/NelsonClark/Hubitat/tree/main/Apps/Hydro-Quebec_Dynamic_Pricing
@@ -27,7 +28,7 @@ import java.text.SimpleDateFormat
 
 def setConstants(){
 	state.name = "Hydro-Quebec Dynamic Pricing"
-	state.version = "1.0.3"
+	state.version = "1.0.4"
 	state.HQEventURL = "https://donnees.solutions.hydroquebec.com/donnees-ouvertes/data/json/pointeshivernales.json"
 	//This is for testing purposes, for normal operation must be set to false
 	state.testMode = false
@@ -241,10 +242,8 @@ def pageConfig() {
 			paragraph "<br><b>Select switch to disable Evening events</b> (this can be a virtual switch for other automations)"
 			input "eventEveningDisableSwitch", "capability.switch", title: "Switches", multiple: false
 
-//			Feature has not yet been enabled.
-//			paragraph "<br><b>Set to on if you want the hub to recheck events and recover if we are within an event</b> (recommended)"
-//			input "restartEventRecovery", "bool", title: "Hub restart event recovery", defaultValue:true, submitOnChange:true, width:6
-
+			paragraph "<br><b>Set to on if you want the hub to recheck events and recover if we are within an event</b> (recommended)"
+			input "restartEventRecovery", "bool", title: "Hub restart event recovery", defaultValue:true, submitOnChange:true, width:6
 		}
 
 		section (""){
@@ -326,17 +325,28 @@ def uninstalled() {
 //
 //************************************************************
 def hubRestartHandler(evt) {
-	logger("trace", "hubRestartHandler")
+	logger("trace", "hubRestartHandler---")
 	// Hub has restarted, are there events that we missed and should we do something with it...
-//	if (!restartEventRecovery) {
-//		logger("warn", "Hub has restarted but the hub restart checking for events feature is not selected.")
-//		exit
-//	}
-	
-	logger("warn", "Hub has restarted but the checking events feature has not yet been implemented, stay tuned.")
-	
-	//Go through all events and see if we are within an event period
 
+	if (!restartEventRecovery) {
+		logger("warn", "Hub has restarted but the hub restart checking for events feature is not selected.")
+		exit
+	}
+	
+	logger("warn", "Hub has restarted let's see if we have events to schedule and/or start.")
+	
+	//Remove all events, poll API and schedule all upcoming events
+	state.pollManually = true
+	unschedule("setHouseInMorningPreEventMode")
+	unschedule("setHouseInMorningEventMode")
+	unschedule("setHouseInMorningNormalMode")
+	unschedule("setHouseInEveningPreEventMode")
+	unschedule("setHouseInEveningEventMode")
+	unschedule("setHouseInEveningNormalMode")
+	
+	poll()
+
+	logger("trace","---End hubRestartHandler")
 }
 
 
@@ -359,7 +369,7 @@ def startApp() {
 	state.currentMode = "Normal"
 	app.updateLabel("$state.name")
 	initialize()
-	logger("debug", "App has been started")
+	logger("warn", "HQ App has been started")
 }
 
 
@@ -383,7 +393,7 @@ def pauseApp() {
 	unsubscribe()
 	unschedule()
 	app.updateLabel("$state.name <span style='color:red'>(Paused)</span>")
-	logger("debug", "App has been paused")
+	logger("warn", "HQ App has been paused, all schedules removed")
 }
 
 //************************************************************
@@ -401,8 +411,9 @@ def pauseApp() {
 //
 //************************************************************
 def startPolling() {
-	logger("trace", "startPoll")
-	runEvery30Minutes(poll)        
+	logger("trace", "startPolling---")
+	runEvery30Minutes(poll)
+	logger("trace", "---End startPolling")
 }
 
 
@@ -421,10 +432,11 @@ def startPolling() {
 //
 //************************************************************
 def poll() {
-	logger("trace", "poll")
+	logger("trace", "poll---")
 	requestParams = [ uri: state.HQEventURL, ignoreSSLIssues: true]
 	logger("debug", "Poll Api: $requestParams")
 	asynchttpGet("pollHandler", requestParams)
+	logger("trace", "---End poll")
 }
 
 
@@ -443,7 +455,7 @@ def poll() {
 //
 //************************************************************
 def pollHandler(resp, data) {
-	logger("trace", "pollHandler")
+	logger("trace", "pollHandler---")
 	
 	if ((resp.getStatus() == 200) || (resp.getStatus() == 207)) {
 		logger("debug", "Poll Api Successful")
@@ -469,6 +481,7 @@ def pollHandler(resp, data) {
 		//Error while poling API, no problem we will poll it again in xx minutes
 		logger("warn", "Poll Api error: RESP: " + resp.getStatus() + " - $resp and DATA: $data")
 	}
+	logger("trace", "---End pollHandler")
 }
 
 
@@ -487,27 +500,24 @@ def pollHandler(resp, data) {
 //
 //************************************************************
 def handleHQEvents() {
-	logger("trace", "HandleHQEvents")
+	logger("trace", "HandleHQEvents---")
 	
 	response = parseJson(state.apiData)    
-	
-	def currDate = new Date()
-
-	//Let's go through each event in the JSON file and schedule all new events
 	newEventsPush = ""
 			
+	//Let's go through each event in the JSON file and schedule all new events
 	for (eventInfo in response.evenements) {
  
-		def date = new Date()
+		def currentDateTime = new Date()
 								
 		if (eventInfo.offre == settings.eventType) {
 
-			//Let's parse event info so we can schedule it, send info to logs or even to a device
-			eventStartPeriod = Date.parse("yyyy-MM-dd'T'HH:mm:ss", eventInfo.dateDebut)
-			eventEndPeriod = Date.parse("yyyy-MM-dd'T'HH:mm:ss", eventInfo.dateFin)
+			eventStartPeriod = toDateTime(eventInfo.dateDebut)
+			eventEndPeriod = toDateTime(eventInfo.dateFin)
 				
-			if (eventStartPeriod > date) {
-				logger("debug", "new $eventStartPeriod to $eventEndPeriod")
+			//Check if event has ended or not
+			if (eventEndPeriod > currentDateTime) {
+				logger("debug", "Processing event from $eventStartPeriod to $eventEndPeriod")
 
 				//Add event info to log and notification text
 				if (!newEventsPush) {
@@ -522,17 +532,43 @@ def handleHQEvents() {
 				calendar.setTime(timeVarObj)
 				int integerHour = calendar.get(Calendar.HOUR_OF_DAY)
 
-				if ((eventStartPeriod > date) && (!state.testMode)) {
-					//Let's program events 
-					if (integerHour < 12) {
-						schedule(convertTimeToCron(eventInfo.dateDebut, preEventMorningMinutes * -1), setHouseInMorningPreEventMode, [overwrite: false])
-						schedule(convertTimeToCron(eventInfo.dateDebut, 0), setHouseInMorningEventMode, [overwrite: false])
-						schedule(convertTimeToCron(eventInfo.dateFin, 0) , setHouseInMorningNormalMode, [overwrite: false])
+				//Let's program events 
+				if (integerHour < 12) {
+					use (TimeCategory) { preEventStartPeriod = eventStartPeriod - preEventMorningMinutes.toInteger().minutes }
+						
+					if (!timeOfDayIsBetween(preEventStartPeriod, eventStartPeriod, currentDateTime)) {
+						schedule(convertISODateTimeToCron(eventInfo.dateDebut, preEventMorningMinutes * -1), setHouseInMorningPreEventMode, [overwrite: false])
 					} else {
-						schedule(convertTimeToCron(eventInfo.dateDebut, preEventEveningMinutes * -1), setHouseInEveningPreEventMode, [overwrite: false])
-  						schedule(convertTimeToCron(eventInfo.dateDebut, 0), setHouseInEveningEventMode, [overwrite: false])
-						schedule(convertTimeToCron(eventInfo.dateFin, 0), setHouseInEveningNormalMode, [overwrite: false])
+						log.debug "Pre-Event started, let's go in pre-event mode right away!"
+						setHouseInMorningPreEventMode()
 					}
+
+					if (!timeOfDayIsBetween(eventStartPeriod, eventEndPeriod, currentDateTime)) {
+						schedule(convertISODateTimeToCron(eventInfo.dateDebut, 0), setHouseInMorningEventMode, [overwrite: false])
+					} else {
+						log.debug "Event started, let's go in pre-event mode right away!"
+						setHouseInMorningEventMode()
+					}
+
+					schedule(convertISODateTimeToCron(eventInfo.dateFin, 0) , setHouseInMorningNormalMode, [overwrite: false])
+				} else {
+					use (TimeCategory) { preEventStartPeriod = eventStartPeriod - preEventEveningMinutes.toInteger().minutes }
+						
+					if (!timeOfDayIsBetween(preEventStartPeriod, eventStartPeriod, currentDateTime)) {
+						schedule(convertISODateTimeToCron(eventInfo.dateDebut, preEventEveningMinutes * -1), setHouseInEveningPreEventMode, [overwrite: false])
+					} else {
+						log.debug "Pre-Event started, let's go in pre-event mode right away!"
+						setHouseInEveningPreEventMode()
+					}
+
+					if (!timeOfDayIsBetween(eventStartPeriod, eventEndPeriod, currentDateTime)) {
+						schedule(convertISODateTimeToCron(eventInfo.dateDebut, 0), setHouseInEveningEventMode, [overwrite: false])
+					} else {
+						log.debug "Event started, let's go in pre-event mode right away!"
+						setHouseInEveningEventMode()
+					}
+
+					schedule(convertISODateTimeToCron(eventInfo.dateFin, 0), setHouseInEveningNormalMode, [overwrite: false])
 				}
 				newEventsPush = newEventsPush + " " + eventStartPeriod + " to " + eventEndPeriod + " "
 			}
@@ -548,15 +584,17 @@ def handleHQEvents() {
 	}
 	state.pollManually = false
 	logger("debug", newEventsPush)
+	logger("trace", "---End HandleHQEvents")
 }
 
+
 //************************************************************
-// convertTimeToCron
+// convertISODateTimeToCron
 //     Converts ISO time to a CRON expression adding minutes
 //		to subtract minutes, add a negative number
 //
 // Signature(s)
-//     string = convertTimeToCron(string timeVar, string minutesToAdd)
+//     string = convertISODateTimeToCron(string timeVar, string minutesToAdd)
 //
 // Parameters
 //     timeVar : ISO formatted date
@@ -566,15 +604,15 @@ def handleHQEvents() {
 //     CRON formatted string
 //
 //************************************************************
-def convertTimeToCron(timeVar, minutesToAdd = 0) {
-	//log.debug "The timeVar is ${timeVar}"
+def convertISODateTimeToCron(timeVar, minutesToAdd = 0) {
+	logger("trace", "convertISODateTimeToCron---")
+	
 	SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
 	Calendar calendar = new GregorianCalendar()
 	Date timeVarObj = format.parse(timeVar)
 	calendar.setTime(timeVarObj)
 	calendar.add(Calendar.MINUTE, (minutesToAdd.toInteger()) )
 	timeVarObj = calendar.getTime()
-	//log.debug "The timeVarObj is " + timeVarObj
 	String second = calendar.get(Calendar.SECOND).toString().padLeft(2, '0')
 	String hour = calendar.get(Calendar.HOUR_OF_DAY).toString().padLeft(2, '0')
 	String minute = calendar.get(Calendar.MINUTE).toString().padLeft(2, '0')
@@ -582,6 +620,8 @@ def convertTimeToCron(timeVar, minutesToAdd = 0) {
 	String month = (calendar.get(Calendar.MONTH) + 1).toString().padLeft(2, '0')
 	String year = calendar.get(Calendar.YEAR)
 	String cronExp = "${second} ${minute} ${hour} ${day} ${month} ? ${year}"
+	
+	logger("trace", "---end convertISODateTimeToCron")
 	return cronExp
 }
 
@@ -601,7 +641,7 @@ def convertTimeToCron(timeVar, minutesToAdd = 0) {
 //
 //************************************************************
 def setHouseInMorningPreEventMode() {
-	logger("trace", "setHouseInMorningPreEventMode")
+	logger("trace", "setHouseInMorningPreEventMode---")
 	
 	if ((eventMorningDisableSwitch) || (preEventMorningMinutes == 1)) {
 		logger("warn", "Morning pre-event disabled, skipping this event!")
@@ -616,7 +656,7 @@ def setHouseInMorningPreEventMode() {
 	
 	if ((sendPushMessage) && (startMorningPreEventPush)) {
 		logger("trace", "Push Message: Morning pre-event fired!")
-		sendPushMessage.deviceNotification("Morning pre-event fired!")
+		sendPushMessage.deviceNotification("HQ Morning pre-event has started!")
 	}
 	
 	def prePreviousSettings = [:]
@@ -651,7 +691,7 @@ def setHouseInMorningPreEventMode() {
 	state.prePreviousSettings = prePreviousSettings
 
 	app.updateLabel("$state.name <span style='color:green'>Morning pre-event in progress</span>")
-	logger("trace", "end setHouseInMorningPreEventMode")
+	logger("trace", "---end setHouseInMorningPreEventMode")
 }
 
 
@@ -670,7 +710,7 @@ def setHouseInMorningPreEventMode() {
 //
 //************************************************************
 def setHouseInMorningEventMode() {
-	logger("trace", "setHouseInMorningEventMode")
+	logger("trace", "setHouseInMorningEventMode---")
 	
 	if (eventMorningDisableSwitch) {
 		logger("warn", "Morning event disabled, skipping this event!")
@@ -679,7 +719,7 @@ def setHouseInMorningEventMode() {
 	
 	if (state.currentMode == "MorningPreEvent") {
 
-		logger("trace", "revert setHouseInMorningPreEventMode")
+		logger("trace", "revert setHouseInMorningPreEventMode---")
 		
 		for (preEventTrigger in preEventMorningTriggers) {
 			def switchState = state.prePreviousSettings.find{ it.key == "$preEventTrigger" }?.value
@@ -719,7 +759,7 @@ def setHouseInMorningEventMode() {
 
 		state.remove("prePreviousSettings")
 		pauseExecution(10000)
-		logger("trace", "end revert setHouseInMorningPreEventMode")
+		logger("trace", "---end revert setHouseInMorningPreEventMode")
 	}
 	
 	state.currentMode = "MorningEvent"
@@ -730,7 +770,7 @@ def setHouseInMorningEventMode() {
 	
 	if ((sendPushMessage) && (startMorningEventPush)) {
 		logger("trace", "Morning event fired!")
-		sendPushMessage.deviceNotification("Morning event fired!")
+		sendPushMessage.deviceNotification("HQ Morning event has started!")
 	}
 	
 	def previousSettings = [:]
@@ -765,7 +805,7 @@ def setHouseInMorningEventMode() {
 	state.previousSettings = previousSettings
 
 	app.updateLabel("$state.name <span style='color:green'>Morning Event in progress</span>")
-	logger("trace", "end setHouseInMorningEventMode")
+	logger("trace", "---end setHouseInMorningEventMode")
 }
 
 
@@ -784,7 +824,7 @@ def setHouseInMorningEventMode() {
 //
 //************************************************************
 def setHouseInMorningNormalMode() {
-	logger("trace", "setHouseInMorningNormalMode")
+	logger("trace", "setHouseInMorningNormalMode---")
 	
 	if (eventMorningDisableSwitch) {
 		exit
@@ -834,12 +874,12 @@ def setHouseInMorningNormalMode() {
 	
 	if ((sendPushMessage) && (endMorningEventPush)) {
 		logger("trace", "Push Message: Back to normal!")
-		sendPushMessage.deviceNotification("Back to normal!")
+		sendPushMessage.deviceNotification("HQ Morning event ended, back to normal!")
 	}
 
 	state.remove("previousSettings")
 	app.updateLabel("$state.name")
-	logger("trace", "end setHouseInMorningNormalMode")
+	logger("trace", "---end setHouseInMorningNormalMode")
 	
 }
 
@@ -859,7 +899,7 @@ def setHouseInMorningNormalMode() {
 //
 //************************************************************
 def setHouseInEveningPreEventMode() {
-	logger("trace", "setHouseInEveningPreEventMode")
+	logger("trace", "setHouseInEveningPreEventMode---")
 
 	if ((eventEveningDisableSwitch) || (preEventEveningMinutes == 1)) {
 		logger("warn", "Evening event disabled, skipping this event!")
@@ -874,7 +914,7 @@ def setHouseInEveningPreEventMode() {
 	
 	if ((sendPushMessage) && (StartEveningPreEventPush)) {
 		logger("trace", "Push Message: Evening event fired!")
-		sendPushMessage.deviceNotification("Evening event fired!")
+		sendPushMessage.deviceNotification("HQ Evening event has started!")
 	}
 	
 	def prePreviousSettings = [:]
@@ -909,7 +949,7 @@ def setHouseInEveningPreEventMode() {
 	state.prePreviousSettings = prePreviousSettings
 
 	app.updateLabel("$state.name <span style='color:green'>Evening pre-event in progress</span>")
-	logger("trace", "end setHouseInEveningPreEventMode")
+	logger("trace", "---end setHouseInEveningPreEventMode")
 }
 
 
@@ -928,7 +968,7 @@ def setHouseInEveningPreEventMode() {
 //
 //************************************************************
 def setHouseInEveningEventMode() {
-	logger("trace", "setHouseInEveningEventMode")
+	logger("trace", "setHouseInEveningEventMode---")
 
 	if (eventEveningDisableSwitch) {
 		logger("warn", "Evening event disabled, skipping this event!")
@@ -937,7 +977,7 @@ def setHouseInEveningEventMode() {
 
 	if (state.currentMode == "EveningPreEvent") {
 
-		logger("trace", "revert setHouseInEveningPreEventMode")
+		logger("trace", "revert setHouseInEveningPreEventMode---")
 
 		for (preEventTrigger in preEventEveningTriggers) {
 			def switchState = state.prePreviousSettings.find{ it.key == "$preEventTrigger" }?.value
@@ -977,7 +1017,7 @@ def setHouseInEveningEventMode() {
 
 		state.remove("prePreviousSettings")
 		pauseExecution(10000)
-		logger("trace", "end revert setHouseInEveningPreEventMode")
+		logger("trace", "---end revert setHouseInEveningPreEventMode")
 	}
 	
 	state.currentMode = "EveningEvent"
@@ -988,7 +1028,7 @@ def setHouseInEveningEventMode() {
 	
 	if ((sendPushMessage) && (StartEveningEventPush)) {
 		logger("trace", "Push Message: Evening event fired!")
-		sendPushMessage.deviceNotification("Evening event fired!")
+		sendPushMessage.deviceNotification("HQ Evening event has started!")
 	}
 	
 	def previousSettings = [:]
@@ -1023,7 +1063,7 @@ def setHouseInEveningEventMode() {
 	state.previousSettings = previousSettings
 
 	app.updateLabel("$state.name <span style='color:green'>Evening Event in progress</span>")
-	logger("trace", "end setHouseInEveningEventMode")
+	logger("trace", "---end setHouseInEveningEventMode")
 }
 
 
@@ -1042,7 +1082,7 @@ def setHouseInEveningEventMode() {
 //
 //************************************************************
 def setHouseInEveningNormalMode() {
-	logger("trace", "setHouseInEveningNormalMode")
+	logger("trace", "setHouseInEveningNormalMode---")
 
 	if (eventEveningDisableSwitch) {
 		exit
@@ -1092,12 +1132,12 @@ def setHouseInEveningNormalMode() {
 
 	if ((sendPushMessage) && (endEveningEventPush)) {
 		logger("trace", "Push Message: Back to normal!")
-		sendPushMessage.deviceNotification("Back to normal!")
+		sendPushMessage.deviceNotification("HQ Evening event ended, back to normal!")
 	}
 
 	state.remove("previousSettings")
 	app.updateLabel("$state.name")
-	logger("trace", "end setHouseInEveningNormalMode")
+	logger("trace", "---end setHouseInEveningNormalMode")
 }
 
 
