@@ -27,8 +27,8 @@ import groovy.time.TimeCategory
 
 
 def setConstants(){
-	state.name = "Hydro-Quebec Dynamic Pricing"
-	state.version = "1.0.4"
+	state.name = "Hydro-Québec Dynamic Pricing"
+	state.version = "1.0.5"
 	state.HQEventURL = "https://donnees.solutions.hydroquebec.com/donnees-ouvertes/data/json/pointeshivernales.json"
 	//This is for testing purposes, for normal operation must be set to false
 	state.testMode = false
@@ -50,17 +50,23 @@ definition(
 
 
 preferences {
-	page(name: "pageConfig")
+	page(name: "mainPage")
+	page(name: "configMorningPreEvents")
+	page(name: "configEveningPreEvents")
+	page(name: "configMorningEvents")
+	page(name: "configEveningEvents")
+	page(name: "configNotifications")
+	page(name: "configAdvancedSettings")
 }
 
 
-def pageConfig() {
+def mainPage() {
 	// Let's just set a few things before starting
 	setConstants()
 	def displayUnits = getDisplayUnits()
 
 
-	dynamicPage(name: "", title: "", install: true, uninstall: true, refreshInterval:0) {
+	dynamicPage(name: "mainPage", title: "<style> h2{color:navy;}h3{color:navy;}</style><h2>${state.name}</h2><p style='font-size:small;color:navy'>v${state.version}</p>", install: true, uninstall: true, refreshInterval:0) {
 
 		// Event Options with French descriptions (For future version with language preferences)
 		/*
@@ -95,12 +101,12 @@ def pageConfig() {
 		]
 
 
-		section("<b>$state.name</b> ver. $state.version"){
+		section(""){
 			if (state.currentMode == "Paused") {    
 				paragraph "This app has been paused, press <b>start</b> to resume normal operation."
 				input name: "btnStart", type: "button", textColor: "white", backgroundColor: "green", title: "  Start app  "
 			} else {
-				paragraph "You can pause this app when not needed for long periods to save resources."
+				paragraph "Pause app when not needed for long periods to save resources."
 				input name: "btnPause", type: "button", textColor: "white", backgroundColor: "red", title: "  Pause app  "
 			}
 		}	
@@ -109,150 +115,30 @@ def pageConfig() {
 			paragraph "<br>"
 		}
 
-		section(title: "Event types and Polling...", hideable: true, hidden: hideEventTypeSection()) {
-			input (name: "eventType", type: "enum", title: "<br><b>Hydro Quebec Event types you are Subscribed to</b>", options: eventTypeOptions, required: true, defaultValue: "CPC-D")
+		section(title: "${btnIcon('pi-cog')} Event types and Polling...", hideable: true, hidden: false) {
+			input (name: "eventType", type: "enum", title: "<br>Hydro Quebec Event types you are Subscribed to", options: eventTypeOptions, required: true, defaultValue: "CPC-D")
 
-			paragraph "<br>"
-			input (name: "pollStartTime", type: "time", title: "<br><b>Time to start poling the API <i>Around 13:00 is a good time</i></b>", defaultValue: "13:13")
+			input (name: "pollStartTime", type: "time", title: "<br>Time to start poling the API <i>Around 13:00 is a good time</i>", defaultValue: "13:13")
 		
-			paragraph "<br><b>Poll the API and re-schedule all upcoming events.</b>"
+			paragraph "<br>Poll the API and re-schedule all upcoming events."
 			input name: "btnPoll", type: "button", textColor: "white", backgroundColor: "orange", title: "Poll API"
 		}
 
-		section (""){
-			paragraph "<br>"
+		section (title: "${btnIcon('pi-sliders-v')} Event settings", hideable: true, hidden: false){
+			paragraph "<p>"
+			paragraph (hrefButton("${btnIcon('pi-angle-left')} ${btnIcon('pi-sun')} Morning Pre Event Actions", "./mainPage/configMorningPreEvents?idx=-1") + "&nbsp;&nbsp;" + hrefButton("${btnIcon('pi-sun')} ${btnIcon('pi-angle-right')} Morning Event Actions", "./mainPage/configMorningEvents"), width: 5)
+			paragraph "<p>"
+			paragraph (hrefButton("${btnIcon('pi-angle-left')} ${btnIcon('pi-moon')} Evening Pre Event Actions", "./mainPage/configEveningPreEvents") + "&nbsp;&nbsp;" + hrefButton("${btnIcon('pi-sun')} ${btnIcon('pi-angle-right')} Evening Event Actions", "./mainPage/configEveningEvents"), width: 5)
+			paragraph "<p>"
+			paragraph hrefButton("${btnIcon('pi-phone')} Notifications", "./mainPage/configNotifications"), width: 5
+			paragraph "<p>"
+			paragraph hrefButton("${btnIcon('pi-wrench')} Advanced Settings", "./mainPage/configAdvancedSettings"), width: 5
+			paragraph "<p>"
 		}
 
-		section("Morning pre-events...", hideable: true, hidden : hideMorningPreEventsSection()){
-			paragraph "<br><b>Minutes before morning event to start morning pre-event mode <i>(enter '1' to disable pre-events)</i>.</b>"
-			input "preEventMorningMinutes", "number", title: "Number of minutes before event", required:true, defaultValue:120, submitOnChange:true
-
-			paragraph "<br><b>Select switch(es) to turn <i>ON</i> during a morning pre-event (This is mostly used to trigger other automations).</b>"
-			input "preEventMorningTriggers", "capability.switch", title: "Switches", multiple: true
-		
-			paragraph "<br><b>Select outlet(s)/switch(es) to turn <i>OFF</i> during a morning pre-event.</b>"
-			input "preEventMorningSwitches", "capability.switch", title: "Switches", multiple: true
-		
-			paragraph "<br><b>Select thermostats to turn <i>OFF</i> during a morning pre-event.</b>"
-			input "preEventMorningThermostatsOff", "capability.thermostat", title: "Thermostats", multiple: true
-			
-			paragraph "<br><b>Select thermostats to turn <i>UP</i> during a morning pre-event.</b>"
-			input "preEventMorningThermostats", "capability.thermostat", title: "Thermostats", multiple: true
-			input "preEventMorningDegrees", "number", title: "Number of degrees $displayUnits to go up from current setting", required:true, defaultValue:3, submitOnChange:true
-		}
-
-		section("Morning events...", hideable: true, hidden : hideMorningEventsSection()){
-			paragraph "<br><b>Select outlet(s)/switch(es) to turn <i>OFF</i> during a morning event.</b>"
-			input "eventMorningSwitches", "capability.switch", title: "Switches", multiple: true
-		
-			paragraph "<br><b>Select switch(es) to turn <i>ON</i> during a morning event (This is mostly used to trigger other automations).</b>"
-			input "eventMorningTriggers", "capability.switch", title: "Switches", multiple: true
-		
-			paragraph "<br><b>Select thermostats to turn <i>OFF</i> during a morning event.</b>"
-			input "eventMorningThermostatsOff", "capability.thermostat", title: "Thermostats", multiple: true
-			
-			paragraph "<br><b>Select thermostats to turn <i>DOWN</i> during a morning event.</b>"
-			input "eventMorningThermostats", "capability.thermostat", title: "Thermostats", multiple: true
-			input "eventMorningDegrees", "number", title: "Number of degrees $displayUnits to drop from current setting", required:true, defaultValue:3, submitOnChange:true
-		}
-
-		section (""){
-			paragraph "<br>"
-		}
-		
-		section("Evening pre-events...", hideable: true, hidden : hideEveningPreEventsSection()){
-			if (!eveningSameAsMorning) {
-				paragraph "<br><b>Minutes before evening event to start evening pre-event mode <i>(enter '1' to disable pre-events)</i>.</b>"
-				input "preEventEveningMinutes", "number", title: "Number of minutes before event", required:true, defaultValue:120, submitOnChange:true
-
-				paragraph "<br><b>Select switch(es) to turn <i>ON</i> during a evening pre-event (This is mostly used to trigger other automations).</b>"
-				input "preEventEveningTriggers", "capability.switch", title: "Switches", multiple: true
-		
-				paragraph "<br><b>Select outlet(s)/switch(es) to turn <i>OFF</i> during a evening pre-event.</b>"
-				input "preEventEveningSwitches", "capability.switch", title: "Switches", multiple: true
-		
-				paragraph "<br><b>Select thermostats to turn <i>OFF</i> during a evening pre-event.</b>"
-				input "preEventEveningThermostatsOff", "capability.thermostat", title: "Thermostats", multiple: true
-			
-				paragraph "<br><b>Select thermostats to turn <i>UP</i> during a evening pre-event.</b>"
-				input "preEventEveningThermostats", "capability.thermostat", title: "Thermostats", multiple: true
-				input "preEventEveningDegrees", "number", title: "Number of degrees $displayUnits to go up from current setting", required:true, defaultValue:3, submitOnChange:true
-			}
-		}
-
-		section("Evening events...", hideable: true, hidden : hideEveningEventsSection()){
-
-			input "eveningSameAsMorning", "bool", title: "Use same settings for Evening events", defaultValue:false, submitOnChange:true, width:6
-
-			if (!eveningSameAsMorning) {
-				paragraph "<br><b>Select outlet(s)/switch(es) to turn <i>OFF</i> during an evening event.</b>"
-				input "eventEveningSwitches", "capability.switch", title: "Switches", multiple: true
-
-				paragraph "<br><b>Select switch(es) to turn <i>ON</i> during an evening event (This is mostly used to trigger other automations).</b>"
-				input "eventEveningTriggers", "capability.switch", title: "Switches", multiple: true
-		
-				paragraph "<br><b>Select thermostats to turn <i>OFF</i> during an evening event.</b>"
-				input "eventEveningThermostatsOff", "capability.thermostat", title: "Thermostats", multiple: true
-
-				paragraph "<br><b>Select thermostats to turn <i>DOWN</i> during an evening event.</b>"
-				input "eventEveningThermostats", "capability.thermostat", title: "Thermostats", multiple: true
-				input "eventEveningDegrees", "number", title: "Number of degrees $displayUnits to drop from current setting", required:true, defaultValue:3, submitOnChange:true
-			}
-		}
-		
-		section (""){
-			paragraph "<br>"
-		}
-
-		section (title: "Notifications...", hideable: true, hidden: hideNotificationSection()) {
-			paragraph "<br><b>Select switch/light reminder to turn on during events to indicate event state.</b>"
-			input "eventStateSwitch", "capability.switch", title: "Switches", multiple: false
-
-			paragraph "<br><b>Devices to send text notifications to.</b>"
-			input "sendPushMessage", "capability.notification", title: "Send a Pushover notification", multiple:true, required:false, submitOnChange:true
-			if (sendPushMessage) {
-				paragraph "<b>Events to send:</b> Select events to send to the selected notification devices."
-				input "startMorningPreEventPush", "bool", title: "Morning Pre-Event Start Report", defaultValue:false, submitOnChange:true, width:6
-				input "startEveningPreEventPush", "bool", title: "Evening Pre-Event Start Report", defaultValue:false, submitOnChange:true, width:6
-				input "startMorningEventPush", "bool", title: "Morning Event Start Report", defaultValue:false, submitOnChange:true, width:6
-				input "startEveningEventPush", "bool", title: "Evening Event Start Report", defaultValue:false, submitOnChange:true, width:6
-				input "endMorningEventPush", "bool", title: "Morning Event End Report", defaultValue:false, submitOnChange:true, width:6
-				input "endEveningEventPush", "bool", title: "Evening Event End Report", defaultValue:false, submitOnChange:true, width:6
-				input "newEventsPush", "bool", title: "New Events Added Report", defaultValue:false, submitOnChange:true, width:6
-				input "restartEventRecoveryPush", "bool", title: "Restart Event Recovery Report (if enabled)", defaultValue:false, submitOnChange:true, width:6
-			 }
-
-//			paragraph "<br><b>Devices to send voice notifications to.</b>"
-//			input "sendVoiceMessage", "capability.speechSynthesis", title: "Send a voice message", multiple:true, required:false, submitOnChange:true
-//			if (sendVoiceMessage) {
-//				input "startVoiceMessage", "string", title: "<br><b>Message to say at start of an event</b> (blank will not speak a message)", required: false, defaultValue: "Hydro-Quebec dynamic pricing event is starting"
-//				input "endVoiceMessage", "string", title: "<br><b>Message to say at end of an event</b> (blank will not speak a message)", required: false, defaultValue: "Hydro-Quebec dynamic pricing event has ended"
-//				input "newEventsVoiceMessage", "string", title: "<br><b>Message to say when new Events are added</b> (blank will not speak a message)", required: false, defaultValue: "New Hydro-Quebec dynamic pricing events for tomorrow have been programmed"
-//			 }
-  		}
-
-		section (""){
-			paragraph "<br>"
-		}
-
-		section(title: "Advanced Settings:", hideable: true, hidden : hideAdvancedSection()){
-			paragraph "<br><b>Select switch to disable Morning events</b> (this can be a virtual switch for other automations)"
-			input "eventMorningDisableSwitch", "capability.switch", title: "Switches", multiple: false
-
-			paragraph "<br><b>Select switch to disable Evening events</b> (this can be a virtual switch for other automations)"
-			input "eventEveningDisableSwitch", "capability.switch", title: "Switches", multiple: false
-
-			paragraph "<br><b>Set to on if you want the hub to recheck events and recover if we are within an event</b> (recommended)"
-			input "restartEventRecovery", "bool", title: "Hub restart event recovery", defaultValue:true, submitOnChange:true, width:6
-		}
-
-		section (""){
-			paragraph "<br>"
-		}
-
-		section(title: "Log Settings...", hideable: true, hidden: hideLogSection()) {
-			input (name: "logLevel", type: "enum", title: "<br><b>Logging Level choice system</b> (Messages with this level and higher will be logged)", options: [[0: 'Disabled'], [1: 'Error'], [2: 'Warning'], [3: 'Info'], [4: 'Debug'], [5: 'Trace']], defaultValue: 3)
-			input "logDropLevelTime", "decimal", title: "<br><b>Delay before dropping down to Info Level</b> (in minutes if level is higher than Info)", required: true, defaultValue: 5
+		section(title: "${btnIcon('pi-list')} Log Settings...", hideable: true, hidden: false) {
+			input (name: "logLevel", type: "enum", title: "<br>Logging Level choice system <i>(Messages with this level and higher will be logged)</i>", options: [[0: 'Disabled'], [1: 'Error'], [2: 'Warning'], [3: 'Info'], [4: 'Debug'], [5: 'Trace']], defaultValue: 3)
+			input "logDropLevelTime", "decimal", title: "<br>Delay before dropping down to Info Level <i>(in minutes if level is higher than Info)</i>", required: true, defaultValue: 5
 		}
 
 		section (""){
@@ -262,7 +148,161 @@ def pageConfig() {
 	}
 }
 
+def configMorningPreEvents() {
+	dynamicPage (name: "configMorningPreEvents", title: "<style> h2{color:navy;}h3{color:navy;}</style><h2>Morning Pre Events configuration</h2><p style='font-size:small;color:navy'>v${state.version}</p>", install: false, uninstall: false) {
+		
+		section(""){
+			paragraph "<p>"
+			input "preEventMorningMinutes", "number", title: "Minutes before morning event to start morning pre-event mode <i>(enter '1' to disable pre-events)</i>.", required:true, defaultValue:120, submitOnChange:true
 
+			paragraph "<br>Select switch(es) to turn <i>ON</i> during a morning pre-event (This is mostly used to trigger other automations)."
+			input "preEventMorningTriggers", "capability.switch", title: "Switches", multiple: true
+		
+			paragraph "<br>Select outlet(s)/switch(es) to turn <i>OFF</i> during a morning pre-event."
+			input "preEventMorningSwitches", "capability.switch", title: "Switches", multiple: true
+		
+			paragraph "<br>Select thermostats to turn <i>OFF</i> during a morning pre-event."
+			input "preEventMorningThermostatsOff", "capability.thermostat", title: "Thermostats", multiple: true
+			
+			paragraph "<br>Select thermostats to turn <i>UP</i> during a morning pre-event."
+			input "preEventMorningThermostats", "capability.thermostat", title: "Thermostats", multiple: true
+			input "preEventMorningDegrees", "number", title: "Number of degrees $displayUnits to go up from current setting", required:true, defaultValue:3, submitOnChange:true
+		}
+	}
+}
+
+
+def configMorningEvents() {
+	dynamicPage (name: "configMorningEvents", title: "<style> h2{color:navy;}h3{color:navy;}</style><h2>Morning Events configuration</h2><p style='font-size:small;color:navy'>v${state.version}</p>", install: false, uninstall: false) {
+
+		section(""){
+			paragraph "<br>Select outlet(s)/switch(es) to turn <i>OFF</i> during a morning event."
+			input "eventMorningSwitches", "capability.switch", title: "Switches", multiple: true
+		
+			paragraph "<br>Select switch(es) to turn <i>ON</i> during a morning event (This is mostly used to trigger other automations)."
+			input "eventMorningTriggers", "capability.switch", title: "Switches", multiple: true
+		
+			paragraph "<br>Select thermostats to turn <i>OFF</i> during a morning event."
+			input "eventMorningThermostatsOff", "capability.thermostat", title: "Thermostats", multiple: true
+			
+			paragraph "<br>Select thermostats to turn <i>DOWN</i> during a morning event."
+			input "eventMorningThermostats", "capability.thermostat", title: "Thermostats", multiple: true
+			input "eventMorningDegrees", "number", title: "Number of degrees $displayUnits to drop from current setting", required:true, defaultValue:3, submitOnChange:true
+		}
+	}
+}
+
+def configEveningPreEvents() {
+	dynamicPage (name: "configEveningPreEvents", title: "<style> h2{color:navy;}h3{color:navy;}</style><h2>Evening Pre Events configuration</h2><p style='font-size:small;color:navy'>v${state.version}</p>", install: false, uninstall: false) {
+
+		section(""){
+			if (!eveningSameAsMorning) {
+				paragraph "<p>"
+				input "preEventEveningMinutes", "number", title: "Minutes before evening event to start evening pre-event mode <i>(enter '1' to disable pre-events)</i>.", required:true, defaultValue:120, submitOnChange:true
+
+				paragraph "<br>Select switch(es) to turn <i>ON</i> during a evening pre-event (This is mostly used to trigger other automations)."
+				input "preEventEveningTriggers", "capability.switch", title: "Switches", multiple: true
+		
+				paragraph "<br>Select outlet(s)/switch(es) to turn <i>OFF</i> during a evening pre-event."
+				input "preEventEveningSwitches", "capability.switch", title: "Switches", multiple: true
+		
+				paragraph "<br>Select thermostats to turn <i>OFF</i> during a evening pre-event."
+				input "preEventEveningThermostatsOff", "capability.thermostat", title: "Thermostats", multiple: true
+			
+				paragraph "<br>Select thermostats to turn <i>UP</i> during a evening pre-event."
+				input "preEventEveningThermostats", "capability.thermostat", title: "Thermostats", multiple: true
+				input "preEventEveningDegrees", "number", title: "Number of degrees $displayUnits to go up from current setting", required:true, defaultValue:3, submitOnChange:true
+			}
+		}
+	}
+}
+
+def configEveningEvents() {
+	dynamicPage (name: "configEveningEvents", title: "<style> h2{color:navy;}h3{color:navy;}</style><h2>Evening Events configuration</h2><p style='font-size:small;color:navy'>v${state.version}</p>", install: false, uninstall: false) {
+
+		section(""){
+
+			input "eveningSameAsMorning", "bool", title: "Use same settings for Evening events", defaultValue:false, submitOnChange:true, width:6
+
+			if (!eveningSameAsMorning) {
+				paragraph "<br>Select outlet(s)/switch(es) to turn <i>OFF</i> during an evening event."
+				input "eventEveningSwitches", "capability.switch", title: "Switches", multiple: true
+
+				paragraph "<br>Select switch(es) to turn <i>ON</i> during an evening event (This is mostly used to trigger other automations)."
+				input "eventEveningTriggers", "capability.switch", title: "Switches", multiple: true
+		
+				paragraph "<br>Select thermostats to turn <i>OFF</i> during an evening event."
+				input "eventEveningThermostatsOff", "capability.thermostat", title: "Thermostats", multiple: true
+
+				paragraph "<br>Select thermostats to turn <i>DOWN</i> during an evening event."
+				input "eventEveningThermostats", "capability.thermostat", title: "Thermostats", multiple: true
+				input "eventEveningDegrees", "number", title: "Number of degrees $displayUnits to drop from current setting", required:true, defaultValue:3, submitOnChange:true
+			}
+		}
+	}
+}
+
+def configNotifications() {
+	dynamicPage (name: "configNotifications", title: "<style> h2{color:navy;}h3{color:navy;}</style><h2>Notifications configuration</h2><p style='font-size:small;color:navy'>v${state.version}</p>", install: false, uninstall: false) {
+
+		section ("") {
+			paragraph "<br>Devices to send text notifications to."
+			input "sendPushMessage", "capability.notification", title: "Send a Pushover notification", multiple:true, required:false, submitOnChange:true
+			if (sendPushMessage) {
+				paragraph "Events to send: <i>Select events to send to the selected notification devices.</i>"
+				input "startMorningPreEventPush", "bool", title: "Morning Pre-Event Start Report", defaultValue:false, submitOnChange:true, width:6
+				input "startEveningPreEventPush", "bool", title: "Evening Pre-Event Start Report", defaultValue:false, submitOnChange:true, width:6
+				input "startMorningEventPush", "bool", title: "Morning Event Start Report", defaultValue:false, submitOnChange:true, width:6
+				input "startEveningEventPush", "bool", title: "Evening Event Start Report", defaultValue:false, submitOnChange:true, width:6
+				input "endMorningEventPush", "bool", title: "Morning Event End Report", defaultValue:false, submitOnChange:true, width:6
+				input "endEveningEventPush", "bool", title: "Evening Event End Report", defaultValue:false, submitOnChange:true, width:6
+				input "newEventsPush", "bool", title: "New Events Added Report", defaultValue:false, submitOnChange:true, width:6
+//				input "restartEventRecoveryPush", "bool", title: "Restart Event Recovery Report (if enabled)", defaultValue:false, submitOnChange:true, width:6
+			 }
+
+			paragraph "<br>Devices to send voice notifications to."
+			input "speakVoiceMessage", "capability.speechSynthesis", title: "Voice alerts on this speech device", multiple:true, required:false, submitOnChange:true
+			paragraph "<br>"
+			input "playerVoiceMessage", "capability.musicPlayer", title:"Voice alerts on this music device", multiple: true, required: false, submitOnChange:true
+			
+			if (speakVoiceMessage || playerVoiceMessage) {
+				input "volumeVoiceMessage", "decimal", title: "<br>Volume level of the Voice announcement", required: true, defaultValue: 40 
+				input "startPreEventVoiceMessage", "string", title: "<br>Message to say at start of an event", required: false, defaultValue: "Hydro-Quebec dynamic pricing pre-event is starting"
+				input "startEventVoiceMessage", "string", title: "<br>Message to say at start of an event", required: false, defaultValue: "Hydro-Quebec dynamic pricing event is starting"
+				input "endEventVoiceMessage", "string", title: "<br>Message to say at end of an event", required: false, defaultValue: "Hydro-Quebec dynamic pricing event has ended"
+				input "newEventsVoiceMessage", "string", title: "<br>Message to say when new Events are added", required: false, defaultValue: "New Hydro-Quebec dynamic pricing events for tomorrow have been programmed"
+
+				paragraph "Events to announce: <i>Select events to announce vocally on the selected voice notification devices.</i>"
+				input "startMorningPreEventVoice", "bool", title: "Morning Pre-Event Start Report", defaultValue:false, submitOnChange:true, width:6
+				input "startEveningPreEventVoice", "bool", title: "Evening Pre-Event Start Report", defaultValue:false, submitOnChange:true, width:6
+				input "startMorningEventVoice", "bool", title: "Morning Event Start Report", defaultValue:false, submitOnChange:true, width:6
+				input "startEveningEventVoice", "bool", title: "Evening Event Start Report", defaultValue:false, submitOnChange:true, width:6
+				input "endMorningEventVoice", "bool", title: "Morning Event End Report", defaultValue:false, submitOnChange:true, width:6
+				input "endEveningEventVoice", "bool", title: "Evening Event End Report", defaultValue:false, submitOnChange:true, width:6
+				input "newEventsVoice", "bool", title: "New Events Added Report", defaultValue:false, submitOnChange:true, width:6
+			 }
+  		}
+	}
+}
+
+def configAdvancedSettings() {
+	dynamicPage (name: "configAdvancedSettings", title: "<style> h2{color:navy;}h3{color:navy;}</style><h2>Advanced settings</h2><p style='font-size:small;color:navy'>v${state.version}</p>", install: false, uninstall: false) {
+
+		section(""){
+			paragraph "<br>Select switch/light reminder to turn on during events. <i>(this can be a virtual switch for other automations)</i>"
+			input "eventStateSwitch", "capability.switch", title: "Switches", multiple: false
+
+			paragraph "<br>Select switch that disables Morning events."
+			input "eventMorningDisableSwitch", "capability.switch", title: "Switches", multiple: false
+
+			paragraph "<br>Select switch that disables Evening events."
+			input "eventEveningDisableSwitch", "capability.switch", title: "Switches", multiple: false
+
+			paragraph "<br>Set to on if you want the hub to recheck events and recover if we are within an event <i>(recommended)</i>"
+			input "restartEventRecovery", "bool", title: "Hub restart event recovery", defaultValue:true, submitOnChange:true, width:6
+		}
+	}
+}
 
 
 def installed() {
@@ -504,7 +544,7 @@ def handleHQEvents() {
 	
 	response = parseJson(state.apiData)    
 	newEventsPush = ""
-			
+
 	//Let's go through each event in the JSON file and schedule all new events
 	for (eventInfo in response.evenements) {
  
@@ -536,38 +576,66 @@ def handleHQEvents() {
 				if (integerHour < 12) {
 					use (TimeCategory) { preEventStartPeriod = eventStartPeriod - preEventMorningMinutes.toInteger().minutes }
 						
-					if (!timeOfDayIsBetween(preEventStartPeriod, eventStartPeriod, currentDateTime)) {
-						schedule(convertISODateTimeToCron(eventInfo.dateDebut, preEventMorningMinutes * -1), setHouseInMorningPreEventMode, [overwrite: false])
+					if (timeOfDayIsBetween(preEventStartPeriod, eventStartPeriod, currentDateTime)) {
+						if (!state.prePreviousSettings) {
+							logger("debug", "Pre-Event started, let's go in pre-event mode right away!")
+							setHouseInMorningPreEventMode()
+						} else {
+							logger("debug", "Pre-Event started, but we are already all set!")
+						}
 					} else {
-						log.debug "Pre-Event started, let's go in pre-event mode right away!"
-						setHouseInMorningPreEventMode()
+						if (currentDateTime < preEventStartPeriod) {
+							logger("debug", "Pre-Event not started, let's schedule pre-event!")
+							schedule(convertISODateTimeToCron(eventInfo.dateDebut, preEventMorningMinutes * -1), setHouseInMorningPreEventMode, [overwrite: false])
+						}
 					}
 
-					if (!timeOfDayIsBetween(eventStartPeriod, eventEndPeriod, currentDateTime)) {
-						schedule(convertISODateTimeToCron(eventInfo.dateDebut, 0), setHouseInMorningEventMode, [overwrite: false])
+					if (timeOfDayIsBetween(eventStartPeriod, eventEndPeriod, currentDateTime)) {
+						if (!state.previousSettings) {
+							logger("debug", "Event started, let's go in event mode right away!")
+							setHouseInMorningEventMode()
+						} else {
+							logger("debug", "Event started, but we are already all set!")
+						}
 					} else {
-						log.debug "Event started, let's go in pre-event mode right away!"
-						setHouseInMorningEventMode()
+						if (currentDateTime < eventStartPeriod) {
+							logger("debug", "Event not started, let's schedule event!")
+							schedule(convertISODateTimeToCron(eventInfo.dateDebut, 0), setHouseInMorningEventMode, [overwrite: false])
+						}
 					}
-
+					logger("debug", "Schedule end of evening event")
 					schedule(convertISODateTimeToCron(eventInfo.dateFin, 0) , setHouseInMorningNormalMode, [overwrite: false])
 				} else {
 					use (TimeCategory) { preEventStartPeriod = eventStartPeriod - preEventEveningMinutes.toInteger().minutes }
 						
-					if (!timeOfDayIsBetween(preEventStartPeriod, eventStartPeriod, currentDateTime)) {
-						schedule(convertISODateTimeToCron(eventInfo.dateDebut, preEventEveningMinutes * -1), setHouseInEveningPreEventMode, [overwrite: false])
+					if (timeOfDayIsBetween(preEventStartPeriod, eventStartPeriod, currentDateTime)) {
+						if (!state.prePreviousSettings) {
+							logger("debug", "Pre-Event started, let's go in pre-event mode right away!")
+							setHouseInEveningPreEventMode()
+						} else {
+							logger("debug", "Pre-Event started, but we are already all set!")
+						}
 					} else {
-						log.debug "Pre-Event started, let's go in pre-event mode right away!"
-						setHouseInEveningPreEventMode()
+						if (currentDateTime < preEventStartPeriod) {
+							logger("debug", "Pre-Event not started, let's schedule pre-event!")
+							schedule(convertISODateTimeToCron(eventInfo.dateDebut, preEventEveningMinutes * -1), setHouseInEveningPreEventMode, [overwrite: false])
+						}
 					}
 
-					if (!timeOfDayIsBetween(eventStartPeriod, eventEndPeriod, currentDateTime)) {
-						schedule(convertISODateTimeToCron(eventInfo.dateDebut, 0), setHouseInEveningEventMode, [overwrite: false])
+					if (timeOfDayIsBetween(eventStartPeriod, eventEndPeriod, currentDateTime)) {
+						if (!state.previousSettings) {
+							logger("debug", "Event started, let's go in event mode right away!")
+							setHouseInEveningEventMode()
+						} else {
+							logger("debug", "Event started, but we are already all set!")
+						}
 					} else {
-						log.debug "Event started, let's go in pre-event mode right away!"
-						setHouseInEveningEventMode()
+						if (currentDateTime < eventStartPeriod) {
+							logger("debug", "Event not started, let's schedule event!")
+							schedule(convertISODateTimeToCron(eventInfo.dateDebut, 0), setHouseInEveningEventMode, [overwrite: false])
+						}
 					}
-
+					logger("debug", "Schedule end of evening event")
 					schedule(convertISODateTimeToCron(eventInfo.dateFin, 0), setHouseInEveningNormalMode, [overwrite: false])
 				}
 				newEventsPush = newEventsPush + " " + eventStartPeriod + " to " + eventEndPeriod + " "
@@ -579,6 +647,15 @@ def handleHQEvents() {
 	if ((sendPushMessage) && (newEventsPush) && (!state.testMode)) {
 		sendPushMessage.deviceNotification(newEventsPush)
 	}
+	
+	if ((speakVoiceMessage) && (newEventsVoice)) {
+		speakVoiceMessage.speak(newEventsVoiceMessage,volumeVoiceMessage.toInteger())
+	}
+
+	if ((playerVoiceMessage) && (newEventsVoice)) {
+		playerVoiceMessage.speak(newEventsVoiceMessage,volumeVoiceMessage.toInteger())
+	}
+	
 	if (state.testMode) {
 		logger("debug", "No events have been scheduled since the app is in test mode, next line is for DEBUG purposes only!")
 	}
@@ -659,6 +736,14 @@ def setHouseInMorningPreEventMode() {
 		sendPushMessage.deviceNotification("HQ Morning pre-event has started!")
 	}
 	
+	if ((speakVoiceMessage) && (startMorningPreEventVoice)) {
+		speakVoiceMessage.speak(startPreEventVoiceMessage)
+	}
+
+	if ((playerVoiceMessage) && (startMorningPreEventVoice)) {
+		playerVoiceMessage.speak(startPreEventVoiceMessage)
+	}
+
 	def prePreviousSettings = [:]
 	
 	for (preEventTrigger in preEventMorningTriggers) {
@@ -773,6 +858,14 @@ def setHouseInMorningEventMode() {
 		sendPushMessage.deviceNotification("HQ Morning event has started!")
 	}
 	
+	if ((speakVoiceMessage) && (startMorningEventVoice)) {
+		speakVoiceMessage.speak(startEventVoiceMessage)
+	}
+
+	if ((playerVoiceMessage) && (startMorningEventVoice)) {
+		playerVoiceMessage.speak(startEventVoiceMessage)
+	}
+	
 	def previousSettings = [:]
 	
 	for (eventTrigger in eventMorningTriggers) {
@@ -877,6 +970,14 @@ def setHouseInMorningNormalMode() {
 		sendPushMessage.deviceNotification("HQ Morning event ended, back to normal!")
 	}
 
+	if ((speakVoiceMessage) && (endMorningEventVoice)) {
+		speakVoiceMessage.speak(endEventVoiceMessage)
+	}
+
+	if ((playerVoiceMessage) && (endMorningEventVoice)) {
+		playerVoiceMessage.speak(endEventVoiceMessage)
+	}
+
 	state.remove("previousSettings")
 	app.updateLabel("$state.name")
 	logger("trace", "---end setHouseInMorningNormalMode")
@@ -917,6 +1018,14 @@ def setHouseInEveningPreEventMode() {
 		sendPushMessage.deviceNotification("HQ Evening event has started!")
 	}
 	
+	if ((speakVoiceMessage) && (startEveningPreEventVoice)) {
+		speakVoiceMessage.speak(startPreEventVoiceMessage)
+	}
+
+	if ((playerVoiceMessage) && (startEveningPreEventVoice)) {
+		playerVoiceMessage.speak(startPreEventVoiceMessage)
+	}
+
 	def prePreviousSettings = [:]
 	
 	for (preEventTrigger in preEventEveningTriggers) {
@@ -1031,6 +1140,14 @@ def setHouseInEveningEventMode() {
 		sendPushMessage.deviceNotification("HQ Evening event has started!")
 	}
 	
+	if ((speakVoiceMessage) && (startEveningEventVoice)) {
+		speakVoiceMessage.speak(startEventVoiceMessage)
+	}
+
+	if ((playerVoiceMessage) && (startEveningEventVoice)) {
+		playerVoiceMessage.speak(startEventVoiceMessage)
+	}
+
 	def previousSettings = [:]
 	
 	for (eventTrigger in eventEveningTriggers) {
@@ -1135,6 +1252,14 @@ def setHouseInEveningNormalMode() {
 		sendPushMessage.deviceNotification("HQ Evening event ended, back to normal!")
 	}
 
+	if ((speakVoiceMessage) && (endEveningEventVoice)) {
+		speakVoiceMessage.speak(endEventVoiceMessage)
+	}
+
+	if ((playerVoiceMessage) && (endEveningEventVoice)) {
+		playerVoiceMessage.speak(endEventVoiceMessage)
+	}
+
 	state.remove("previousSettings")
 	app.updateLabel("$state.name")
 	logger("trace", "---end setHouseInEveningNormalMode")
@@ -1224,6 +1349,18 @@ def getDisplayUnits() {
 	}
 }
 
+String btnIcon(String name) {
+    return "<span class='p-button-icon p-button-icon-left pi " + name + "' data-pc-section='icon'></span>"
+}
+
+String hrefButton(String btnName, String href, String iconName=null) {
+    String output = ""
+    output += """<button style="width: 45%; height: 50px"onClick="location.href='""" + href + """'" class="p-button p-component mr-2 mb-2" type="button" aria-label="hrefButton" data-pc-name="button" data-pc-section="root" data-pd-ripple="true">"""
+    if (iconName) output += btnIcon(iconName)
+    output += btnName
+    output += """<span role="presentation" aria-hidden="true" data-p-ink="true" data-p-ink-active="false" class="p-ink" data-pc-name="ripple" data-pc-section="root"></span></button>"""
+    return output
+}
 
 //************************************************************
 // appButtonHandler
@@ -1260,19 +1397,3 @@ void appButtonHandler(String btn) {
 	}
 }
 
-
-//************************************************************
-// *** Hiden menu handlers ***
-// Parameters
-//     None
-// Returns
-//     Boolean
-//************************************************************
-private hideEventTypeSection() {(eventType) ? true : false}
-private hideMorningPreEventsSection() {(preEventMorningSwitches || preEventMorningThermostatsOff || preEventMorningThermostats) ? false : true}
-private hideMorningEventsSection() {(eventMorningSwitches || eventMorningThermostatsOff || eventMorningThermostats) ? false : true}
-private hideEveningPreEventsSection() {(preEventEveningSwitches || preEventEveningThermostatsOff || eventEPreveningThermostats) ? false : true}
-private hideEveningEventsSection() {(eventEveningSwitches || eventEveningThermostatsOff || eventEveningThermostats) ? false : true}
-private hideAdvancedSection() {(eventMorningDisableSwitch || eventEveningDisableSwitch || restartEventRecovery) ? false : true}
-private hideLogSection() {(logLevel == 3) ? true : false}
-private hideNotificationSection() {(eventStateSwitch || sendPushMessage) ? false : true}

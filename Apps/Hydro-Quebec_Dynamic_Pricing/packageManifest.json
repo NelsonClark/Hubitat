@@ -1,10 +1,10 @@
 {
     "packageName": "Hydro-Quebec Dynamic Pricing",
     "author": "Nelson Clark",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "minimumHEVersion": "2.1.9",
     "dateReleased": "2025-01-29",
-    "releaseNotes": "1.0.4 - 2025-02-05 \n     - NEW FEATURE, option to recover after a hub reboot, this will cause all scheduled events to be removed and recheck everything, if within an event period, that event will start immediately.\n     - If the app is started or a manual poll of the API is done, if we are within an event period, that event period will start immediately. \n     - More tweaking of the code. \n     - Various other bug squashing",
+    "releaseNotes": "1.0.5 - 2025-02-18 \n     - Bug when within an event and new event is detected an error would be thrown during scheduling a past event.\n     - Voice announcements to TTS devices and players configurable like regular notifications.\n     - Config page clean up, most config pages now on separate pages to de-clutter the main page.\n     - More tweaking of the code.",
     "apps": [
         {
             "id": "24f7e0e9-8c77-4901-b0f0-b0cbf3d920ca",

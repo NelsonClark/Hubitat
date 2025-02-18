@@ -58,17 +58,20 @@ Enjoy!
   * If the app is started or a manual poll of the API is done, if we are within an event period, that event period will start immediately
   * More tweaking of the code
   * Various other bug squashing
-
+* 1.0.5 - 2025-02-18
+  * Bug when within an event and new event is detected an error would be thrown during scheduling a past event
+  * Voice announcements to TTS devices and players configurable like regular notifications
+  * Config page clean up, most config pages now on separate pages to de-clutter the main page
+  * Other code clean up
 
 # ToDo
 
 Things to do in upcoming releases...
 
 - [x] Notifications to Hubitat app, SMS and or email depending on your notifications devices.
-- [ ] Add possibility to go back to manual control for times where internet acces may not be available
-- [ ] Menu switch to make Evening settings the same as Morning settings
+- [ ] Add possibility to go back to manual control for times where internet access may not be available
 - [ ] Deal with thermostats that are also controlled via Thermostat Schedular
-- [ ] Speech notifications to TTS devices (like SONOS, etc.)
+- [x] Speech notifications to TTS devices (like SONOS, echo speaks, etc.)
 - [x] Add hub restart handler to reschedule any on going events and future events
 
 
